@@ -157,7 +157,7 @@ main{padding:16px 14px 100px;min-width:0}
      <div class="stats" data-v="dash" id="stats"></div>
      <section class="card" data-v="dash projects"><div class="hd"><div><h2 id="pt">Aktif Projeler</h2><p class="sub">Üzerinde çalıştığın projelere hızlıca göz at.</p></div></div><div class="pgrid" id="projs"></div></section>
      <section class="card" data-v="dash ideas"><div class="hd"><div><h2>Son Fikirler</h2><p class="sub">Zihninde dolaşan projeleri unutma.</p></div><button data-a="newi">+ Fikir ekle</button></div><ul class="list" id="ideas"></ul></section>
-     <section class="card" data-v="github"><h2>GitHub bağlantısı</h2><p class="sub">Bağlanınca repolarını okur, aktif olanları bulur ve dosya yüklemeni sağlar.</p><div class="live" style="margin:0"><span id="ghs"></span><button class="ghost" data-a="gh" id="ghb"></button></div><ul class="list" id="repos" style="margin-top:12px"></ul></section>
+     <section class="card" data-v="github"><h2>GitHub bağlantısı</h2><p class="sub">Bağlanınca repolarını okur, aktif olanları bulur ve dosya yüklemeni sağlar.</p><div class="live" style="margin:0"><span id="ghs"></span><button class="ghost" data-a="gh" id="ghb"></button></div><p class="sub" id="sync" style="margin:10px 0 0"></p><ul class="list" id="repos" style="margin-top:12px"></ul></section>
      <section class="card empty" data-v="archive">Arşivlenen proje yok. Biten projelerini buraya taşıyacaksın.</section>
     </div>
     <div>
@@ -186,7 +186,22 @@ let S={name:"",skip:false,gh:false,theme:"dark",projects:[],ideas:[],acts:[]};
 let view="dash",qs="";
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 S.gh=false;
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let tm=null,cloudOK=false;
+const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const snap=()=>({v:1,ts:S.ts||0,name:S.name,theme:S.theme,projects:S.projects,ideas:S.ideas,acts:S.acts});
+const save=()=>{S.ts=Date.now();store();if(cloudOK){clearTimeout(tm);tm=setTimeout(push,1500)}};
+function setSync(st){const e=$("sync");if(e)e.textContent=st==="ok"?"Veriler GitHub’da yedekte (özel repo: buildlog-data).":st==="err"?"Veriler buluta kaydedilemedi, bir sonraki değişiklikte tekrar denenecek.":""}
+async function push(){try{const r=await fetch("/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:snap()})});setSync(r.ok?"ok":"err")}catch(e){setSync("err")}}
+function merge(d){const ids=new Set((d.projects||[]).map(p=>p.id));const it=new Set((d.ideas||[]).map(i=>i.t));
+ S.projects=[...(d.projects||[]),...S.projects.filter(p=>!ids.has(p.id))];S.ideas=[...(d.ideas||[]),...S.ideas.filter(i=>!it.has(i.t))];
+ S.acts=[...S.acts,...(d.acts||[])].slice(0,100);S.name=d.name||S.name;S.theme=d.theme||S.theme}
+async function cloudSync(){try{const r=await fetch("/api/data");if(!r.ok)throw 0;const j=await r.json();const d=j.data;cloudOK=true;
+ const has=S.projects.length||S.ideas.length||S.acts.length||S.name;
+ if(d&&!S.synced){merge(d);S.synced=true;S.ts=Date.now();store();theme();await push();toast("Veriler eşitlendi")}
+ else if(d&&(d.ts||0)>(S.ts||0)){S.name=d.name||S.name;S.theme=d.theme||S.theme;S.projects=d.projects||[];S.ideas=d.ideas||[];S.acts=d.acts||[];S.ts=d.ts;S.synced=true;store();theme();setSync("ok");toast("Veriler eşitlendi")}
+ else if((!d&&has)||(d&&(S.ts||0)>(d.ts||0))){S.synced=true;store();await push()}
+ else{S.synced=true;store();setSync("ok")}
+}catch(e){cloudOK=false;setSync("err")}}
 const find=id=>S.projects.find(p=>p.id===id);
 const un=()=>(S.name||"kullanici").toLowerCase().replace(/[^a-z0-9]+/g,"")||"kullanici";
 let G=null,FL=[];
@@ -199,7 +214,8 @@ function imp(full){const r=G&&G.repos.find(x=>x.full===full);if(!r||S.projects.s
  S.projects.unshift({id:"p"+Date.now()+Math.floor(Math.random()*1e4),name:r.name,desc:r.desc||"Açıklama yok",pct:0,tags:[r.lang,...r.topics.slice(0,2)].filter(Boolean).length?[r.lang,...r.topics.slice(0,2)].filter(Boolean):["Proje"],type,upd:ago(r.pushed),url:r.home||"",repo:r.full});
  S.acts.unshift({i:"gh",t:r.name+" GitHub’dan eklendi",w:"Şimdi"})}
 function syncProjects(){S.projects.forEach(p=>{const r=p.repo&&G.repos.find(x=>x.full===p.repo);if(r){p.upd=ago(r.pushed);if(r.home&&!p.url)p.url=r.home}})}
-async function loadGH(){try{const r=await fetch("/api/repos");if(!r.ok)throw 0;G=await r.json();S.gh=true;if(!S.name)S.name=G.user.name||G.user.login;syncProjects();save()}catch(e){G=null;S.gh=false}render()}
+async function loadGH(){try{const r=await fetch("/api/repos");if(!r.ok)throw 0;G=await r.json();S.gh=true}catch(e){G=null;S.gh=false;render();return}
+ await cloudSync();if(!S.name)S.name=G.user.name||G.user.login;syncProjects();store();render()}
 function askName(){form("Adın ne?",[{k:"n",l:"Sana nasıl hitap edelim?"}],v=>{S.name=v.n;save()},"Kaydet");$("f_n").value=S.name||""}
 const match=s=>!qs||s.toLowerCase().includes(qs);
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)}
