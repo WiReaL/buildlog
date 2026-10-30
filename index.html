@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BuildLog</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap">
+<style>
+:root{--bg:#F3F5FB;--p:#fff;--p2:#F3F5FB;--ln:#DFE4F1;--ink:#141A33;--mu:#5E6891;--ac:#4F5CF0;--ac2:#E5E8FF;--on:#fff;--ok:#16A34A;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A0F20;--p:#0F1630;--p2:#151D3C;--ln:#212A4B;--ink:#E8ECF9;--mu:#8D98BD;--ac:#6B77FF;--ac2:#1D2552;--ok:#34D399;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0A0F20;--p:#0F1630;--p2:#151D3C;--ln:#212A4B;--ink:#E8ECF9;--mu:#8D98BD;--ac:#6B77FF;--ac2:#1D2552;--ok:#34D399;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45;font-size:14px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+p{margin:0}
+.app{display:grid;grid-template-columns:1fr;min-height:100vh}
+.side{display:none}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--ln)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1rem}
+.logo i{width:34px;height:34px;border-radius:10px;background:var(--ac);color:var(--on);display:grid;place-items:center;font-style:normal}
+.logo small{display:block;font-weight:400;font-size:.72rem;color:var(--mu)}
+.top .logo small{display:none}
+.search{flex:1;display:flex;align-items:center;gap:8px;background:var(--p);border:1px solid var(--ln);border-radius:12px;padding:0 12px;min-width:0}
+.search input{flex:1;min-width:0;background:none;border:0;padding:10px 0;outline:0}
+.ib{width:38px;height:38px;border-radius:10px;border:0;background:none;display:grid;place-items:center;color:var(--mu)}
+.me{display:flex;align-items:center;gap:8px;font-weight:700;background:none;border:0;padding:0}
+.me i{width:34px;height:34px;border-radius:50%;background:var(--ac2);color:var(--ac);display:grid;place-items:center;font-style:normal}
+.me span{display:none}
+main{padding:16px 14px 100px;min-width:0}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.hero h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
+.hero p{color:var(--mu)}
+.pri{background:var(--ac);color:var(--on);border:0;border-radius:12px;padding:11px 18px;font-weight:700;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.wide{width:100%;margin-top:12px}
+.ghost{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:8px 12px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.cols>div{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--p);border:1px solid var(--ln);border-radius:16px;padding:16px;min-width:0}
+.card h2{font-size:1.1rem;font-weight:800;margin:0 0 2px}
+.sub{color:var(--mu);margin-bottom:14px}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.hd button{background:none;border:0;color:var(--ac);font-weight:600;padding:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.stat{padding:14px}
+.stat .ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--ac2);color:var(--ac);margin-bottom:10px}
+.stat b{display:block;font-size:1.6rem;line-height:1.2}
+.stat small{color:var(--mu)}
+.pgrid{display:grid;grid-template-columns:1fr;gap:12px}
+.pc{background:var(--p2);cursor:pointer}
+.ph{display:flex;gap:12px;align-items:flex-start}
+.ph b{display:block}
+.ph p{color:var(--mu);font-size:.85rem}
+.av{flex:none;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:1.2rem;background:color-mix(in srgb,hsl(var(--h) 80% 60%) 22%,transparent);color:hsl(var(--h) 85% 62%)}
+.bar{display:flex;align-items:center;gap:10px;margin:14px 0 10px;color:var(--mu);font-size:.8rem}
+.pbar{flex:1;height:7px;border-radius:9px;background:var(--ln);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--ac);border-radius:9px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tags span,.chip{background:var(--ac2);color:var(--mu);border-radius:8px;padding:3px 10px;font-size:.78rem}
+.pf{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:var(--mu)}
+.gh{display:inline-flex;color:var(--mu)}
+.gh.on{color:var(--ok)}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--ln)}
+.list li:first-child{border-top:0}
+.li{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--ac2);color:var(--ac)}
+.list .t{flex:1;min-width:0}
+.list .t b{display:block;font-weight:600}
+.list .t small{color:var(--mu)}
+.list .d{color:var(--mu);font-size:.78rem;white-space:nowrap}
+.dn{display:flex;align-items:center;gap:20px}
+.ring{position:relative;flex:none;width:130px;height:130px;border-radius:50%}
+.ring div{position:absolute;inset:18px;border-radius:50%;background:var(--p);display:grid;place-items:center;text-align:center;font-size:.8rem;color:var(--mu);line-height:1.2}
+.ring b{font-size:1.6rem;color:var(--ink)}
+.lg{flex:1;display:grid;gap:8px}
+.lg div{display:flex;align-items:center;gap:8px;color:var(--mu)}
+.lg i{width:9px;height:9px;border-radius:50%}
+.lg b{margin-left:auto;color:var(--ink)}
+.qa{display:grid;gap:10px}
+.qa button{display:flex;align-items:center;gap:12px;background:var(--p2);border:1px solid var(--ln);border-radius:12px;padding:12px;text-align:left}
+.qa svg{color:var(--ac)}
+.quote{background:linear-gradient(135deg,#3B3FB8,#1E1B4B);color:#fff;border:0;font-weight:500;font-size:1.05rem}
+.quote small{display:block;margin-top:14px;opacity:.75}
+.empty{text-align:center;color:var(--mu);padding:30px 10px}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:var(--p);border-top:1px solid var(--ln);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+.bnav button,.side nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;font-size:.68rem;color:var(--mu);padding:6px 0;border-radius:10px}
+.bnav button.on{color:var(--ac)}
+#ov{position:fixed;inset:0;z-index:40;background:rgba(5,8,20,.6);display:flex;align-items:flex-end;justify-content:center}
+.sh{background:var(--p);width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));border:1px solid var(--ln)}
+.sh h3{margin:0 0 12px;font-size:1.2rem}
+.sh label{display:block;margin-top:14px;color:var(--mu);font-size:.85rem}
+.sh input:not([type=range]):not([type=file]),.sh textarea,.sh select{display:block;width:100%;margin-top:6px;background:var(--p2);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;color:var(--ink)}
+.sh input[type=range]{width:100%;accent-color:var(--ac);margin-top:8px}
+.drop{border:2px dashed var(--ln);border-radius:12px;padding:18px;text-align:center;cursor:pointer}
+.live{display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--ok);border-radius:12px;padding:10px 12px;margin-top:12px}
+.live code{overflow-wrap:anywhere;font-size:.82rem}
+#lg p{margin:4px 0;color:var(--mu)}
+#lg p.ok{color:var(--ok);font-weight:700}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%}
+#toast.show{opacity:1}
+@media (min-width:640px){.stats{grid-template-columns:repeat(4,1fr)}.pgrid{grid-template-columns:1fr 1fr}#ov{align-items:center}.sh{border-radius:20px}.me span{display:inline}}
+@media (min-width:900px){
+ .app{grid-template-columns:240px minmax(0,1fr)}
+ .side{display:flex;flex-direction:column;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;padding:20px 14px;border-right:1px solid var(--ln);background:var(--p)}
+ .side nav{display:grid;gap:4px;margin:26px 0 18px}
+ .side nav button{flex-direction:row;gap:12px;font-size:.92rem;padding:11px 12px;text-align:left}
+ .side nav button.on{background:var(--ac2);color:var(--ac);font-weight:700}
+ .side .logo small{display:block}
+ .top .logo{display:none}
+ .bnav,.fab{display:none}
+ main{padding:20px 22px 40px}
+ #toast{bottom:24px}
+}
+@media (min-width:1280px){.cols:not(.one){grid-template-columns:minmax(0,1fr) 330px}}
+.fab{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:25;width:52px;height:52px;border-radius:16px;border:0;background:var(--ac);color:var(--on);display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+@media (max-width:639px){
+ .hero p,.hero .pri,.dm{display:none}
+ .hero h1{font-size:1.3rem}
+ .stats{gap:8px}
+ .stat{padding:10px 6px;text-align:center}
+ .stat .ico{display:none}
+ .stat small{font-size:.7rem}
+ .stat b{font-size:1.3rem}
+ .cols:not(.one) .hd .sub,.cols:not(.one) .pc .ph p,.cols:not(.one) .pc .tags,.cols:not(.one) .list .t small,.cols:not(.one) .list .chip,.cols:not(.one) .list .d{display:none}
+ .cols:not(.one) .pc .av{width:36px;height:36px}
+ .cols:not(.one) #acts li:nth-child(n+4){display:none}
+ .cols:not(.one) .bar{margin:10px 0 4px}
+ .cols:not(.one) .pf{margin-top:8px}
+}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+ <aside class="side">
+  <div class="logo"><i>&lt;/&gt;</i><div>BuildLog<small>Fikirlerin. Gerçek projeler.</small></div></div>
+  <nav id="snav"></nav>
+  <button class="pri" data-a="newp" style="margin-top:auto">+ Yeni Proje</button>
+ </aside>
+ <div style="min-width:0">
+  <header class="top">
+   <div class="logo"><i>&lt;/&gt;</i>BuildLog</div>
+   <label class="search"><span id="si"></span><input id="q" placeholder="Projelerde, fikirlerde ara…" aria-label="Ara"></label>
+   <button class="ib" data-a="theme" aria-label="Tema değiştir" id="ti"></button>
+   <button class="ib" aria-label="Bildirimler" id="bi"></button>
+   <button class="me" data-a="name" aria-label="Adını değiştir"><i id="mi">?</i><span id="mn"></span></button>
+  </header>
+  <main>
+   <div class="hero" data-v="dash"><div><h1 id="hi"></h1><p>Hayallerine giden yolda, her adım bir proje.</p></div><button class="pri" data-a="newp">+ Yeni Proje</button></div>
+   <div class="cols" id="cols">
+    <div>
+     <div id="smart"></div>
+     <div class="stats" data-v="dash" id="stats"></div>
+     <section class="card" data-v="dash projects"><div class="hd"><div><h2 id="pt">Aktif Projeler</h2><p class="sub">Üzerinde çalıştığın projelere hızlıca göz at.</p></div></div><div class="pgrid" id="projs"></div></section>
+     <section class="card" data-v="dash ideas"><div class="hd"><div><h2>Son Fikirler</h2><p class="sub">Zihninde dolaşan projeleri unutma.</p></div><button data-a="newi">+ Fikir ekle</button></div><ul class="list" id="ideas"></ul></section>
+     <section class="card" data-v="github"><h2>GitHub bağlantısı</h2><p class="sub">Bağlanınca repolarını okur, aktif olanları bulur ve dosya yüklemeni sağlar.</p><div class="live" style="margin:0"><span id="ghs"></span><button class="ghost" data-a="gh" id="ghb"></button></div><ul class="list" id="repos" style="margin-top:12px"></ul></section>
+     <section class="card empty" data-v="archive">Arşivlenen proje yok. Biten projelerini buraya taşıyacaksın.</section>
+    </div>
+    <div>
+     <section class="card" data-v="dash log"><div class="hd"><h2>Son Aktiviteler</h2></div><ul class="list" id="acts"></ul></section>
+     <section class="card dm" data-v="dash"><h2>Proje Dağılımı</h2><div class="dn" style="margin-top:14px" id="dn"></div></section>
+     <section class="card dm" data-v="dash"><h2>Hızlı Erişim</h2><div class="qa" style="margin-top:12px"><button data-a="newp" id="q1"></button><button data-a="newi" id="q2"></button><button data-a="goto" data-v="github" id="q3"></button><button data-a="note" id="q4"></button></div></section>
+     <section class="card quote dm" data-v="dash">“Büyük projeler, küçük adımlarla başlar.”<small>Bilinmeyen</small></section>
+    </div>
+   </div>
+  </main>
+ </div>
+</div>
+<nav class="bnav" id="bnav"></nav>
+<button class="fab" id="fab" data-a="newp" aria-label="Yeni proje"></button>
+<div id="ov" hidden></div>
+<div id="toast" role="status"></div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const I={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',folder:'<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',code:'<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/>',archive:'<path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4"/>',plus:'<path d="M12 5v14M5 12h14"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>',note:'<path d="M6 3h9l4 4v14H6zM9 12h7M9 16h7"/>',check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',folderc:'<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'};
+const ic=(n,s=20)=>n==="gh"?`<svg width="${s}" height="${s}" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>`:`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const NAV=[["dash","Dashboard","home"],["projects","Projeler","folder"],["ideas","Fikir Kasası","bulb"],["log","Geliştirme Günlüğü","code"],["github","GitHub","gh"],["archive","Arşiv","archive"]];
+const TYPES=["Web App","Mobil App","Oyun","Diğer"],COL=["#6B77FF","#34D399","#A3E635","#FBBF24"],HUE=[250,150,330,20,200,50];
+const KEY="buildlog-v2";
+let S={name:"",skip:false,gh:false,theme:"dark",projects:[],ideas:[],acts:[]};
+let view="dash",qs="";
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+S.gh=false;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const find=id=>S.projects.find(p=>p.id===id);
+const un=()=>(S.name||"kullanici").toLowerCase().replace(/[^a-z0-9]+/g,"")||"kullanici";
+let G=null,FL=[];
+const ago=iso=>{const m=(Date.now()-new Date(iso))/6e4;if(m<60)return Math.max(1,Math.round(m))+" dk önce";if(m<1440)return Math.round(m/60)+" saat önce";if(m<43200)return Math.round(m/1440)+" gün önce";return Math.round(m/43200)+" ay önce"};
+const slug=s=>s.toLowerCase().replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const post=async b=>{const r=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});let j={};try{j=await r.json()}catch(e){}return {...j,ok:r.ok}};
+const b64=f=>new Promise((ok,no)=>{const x=new FileReader();x.onload=()=>ok(x.result.split(",")[1]);x.onerror=no;x.readAsDataURL(f)});
+const actRepos=()=>G?G.repos.filter(r=>!r.fork&&!r.archived&&Date.now()-new Date(r.pushed)<2592e6&&!S.projects.some(p=>p.repo===r.full)):[];
+function imp(full){const r=G&&G.repos.find(x=>x.full===full);if(!r||S.projects.some(p=>p.repo===full))return;const tp=r.topics.join(" ");const type=/android|ios|react-native|flutter|expo|mobile/.test(tp)?"Mobil App":/game|unity|godot/.test(tp)?"Oyun":"Web App";
+ S.projects.unshift({id:"p"+Date.now()+Math.floor(Math.random()*1e4),name:r.name,desc:r.desc||"Açıklama yok",pct:0,tags:[r.lang,...r.topics.slice(0,2)].filter(Boolean).length?[r.lang,...r.topics.slice(0,2)].filter(Boolean):["Proje"],type,upd:ago(r.pushed),url:r.home||"",repo:r.full});
+ S.acts.unshift({i:"gh",t:r.name+" GitHub’dan eklendi",w:"Şimdi"})}
+function syncProjects(){S.projects.forEach(p=>{const r=p.repo&&G.repos.find(x=>x.full===p.repo);if(r){p.upd=ago(r.pushed);if(r.home&&!p.url)p.url=r.home}})}
+async function loadGH(){try{const r=await fetch("/api/repos");if(!r.ok)throw 0;G=await r.json();S.gh=true;if(!S.name)S.name=G.user.name||G.user.login;syncProjects();save()}catch(e){G=null;S.gh=false}render()}
+function askName(){form("Adın ne?",[{k:"n",l:"Sana nasıl hitap edelim?"}],v=>{S.name=v.n;save()},"Kaydet");$("f_n").value=S.name||""}
+const match=s=>!qs||s.toLowerCase().includes(qs);
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)}
+function theme(){document.documentElement.setAttribute("data-theme",S.theme)}
+function nav(){const h=(c)=>NAV.map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[1]}</span></button>`).join("");
+ $("snav").innerHTML=h();$("bnav").innerHTML=NAV.slice(0,5).map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[0]==="log"?"Günlük":n[1]}</span></button>`).join("")}
+function show(){document.querySelectorAll("[data-v]").forEach(e=>{if(e.dataset.a)return;e.hidden=!e.dataset.v.split(" ").includes(view)});$("cols").classList.toggle("one",view!=="dash");$("pt").textContent=view==="projects"?"Tüm Projeler":"Aktif Projeler";nav()}
+function card(p){const h=HUE[S.projects.indexOf(p)%6];return `<article class="card pc" data-a="proj" data-id="${p.id}" tabindex="0"><div class="ph"><div class="av" style="--h:${h}">${esc(p.name[0])}</div><div><b>${esc(p.name)}</b><p>${esc(p.desc)}</p></div></div><div class="bar"><div class="pbar"><i style="width:${p.pct}%"></i></div><span>%${p.pct}</span></div><div class="tags">${p.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div><div class="pf"><small>Son güncelleme: ${p.upd}</small><span class="gh ${p.url?"on":""}" title="${p.url?"Canlı":"Henüz yayında değil"}">${ic("gh")}</span></div></article>`}
+function render(){
+ const P=S.projects,act=P.filter(p=>p.pct<100);
+ const AR=actRepos();$("smart").innerHTML=view==="dash"&&AR.length?`<div class="card live" style="margin:0 0 16px"><span>${AR.length} aktif repo bulundu</span><button class="pri" data-a="impall">Hepsini ekle</button></div>`:"";
+ $("stats").innerHTML=[["folder","Toplam Proje",P.length],["bulb","Fikir",S.ideas.length],["code","Aktif Geliştirme",act.length],["check","Tamamlanan",P.filter(p=>p.pct===100).length]].map(s=>`<div class="card stat"><div class="ico">${ic(s[0])}</div><small>${s[1]}</small><b>${s[2]}</b></div>`).join("");
+ const L=(view==="projects"?P:P.filter(p=>p.pct<100)).filter(p=>match(p.name+p.desc+p.tags.join(" ")));
+ $("projs").innerHTML=L.length?L.map(card).join(""):`<p class="empty">${P.length?"Eşleşen proje yok.":"Henüz proje yok. “Yeni Proje” ile ilkini ekle."}</p>`;
+ const ID=S.ideas.filter(i=>match(i.t+i.d));
+ $("ideas").innerHTML=ID.length?ID.map(i=>`<li><div class="li">${ic(i.i)}</div><div class="t"><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><span class="chip">${esc(i.tag)}</span><span class="d">${i.w}</span></li>`).join(""):`<li class="empty" style="display:block">Henüz fikir yok.</li>`;
+ $("acts").innerHTML=!S.acts.length?`<li class="empty" style="display:block">Henüz aktivite yok.</li>`:S.acts.slice(0,view==="log"?50:6).map(a=>`<li><div class="li">${ic(a.i)}</div><div class="t"><b>${esc(a.t)}</b><small>${a.w}</small></div></li>`).join("");
+ const cnt=TYPES.map(t=>P.filter(p=>p.type===t).length);let acc=0;const n=P.length||1;const g=P.length?cnt.map((c,i)=>{const s=acc/n*100;acc+=c;return `${COL[i]} ${s}% ${acc/n*100}%`}).join(","):"var(--ln) 0 100%";
+ $("dn").innerHTML=`<div class="ring" style="background:conic-gradient(${g})"><div><span><b>${P.length}</b><br>Proje</span></div></div><div class="lg">${TYPES.map((t,i)=>`<div><i style="background:${COL[i]}"></i>${t}<b>${cnt[i]}</b></div>`).join("")}</div>`;
+ $("ghs").textContent=S.gh?"Bağlı: @"+(G?G.user.login:""):"Bağlı değil";const nm=S.name;$("hi").textContent=nm?"👋 Tekrar hoş geldin, "+nm+"!":"👋 Hoş geldin!";$("mi").textContent=nm?nm[0].toUpperCase():"?";$("mn").textContent=nm||"Adını ekle";$("ghb").textContent=S.gh?"Bağlantıyı kes":"GitHub’a bağlan";
+ $("repos").innerHTML=G?G.repos.filter(r=>!r.fork&&!r.archived).map(r=>{const imp=S.projects.some(p=>p.repo===r.full);const ac=Date.now()-new Date(r.pushed)<2592e6;return `<li><div class="li">${ic("gh",18)}</div><div class="t"><b>${esc(r.name)}</b><small>${ac?"Aktif":"Durağan"}: ${ago(r.pushed)}${r.lang?" – "+esc(r.lang):""}</small></div>${imp?`<span class="chip">Ekli</span>`:`<button class="ghost" data-a="imp" data-r="${esc(r.full)}">İçe aktar</button>`}</li>`}).join(""):"";
+}
+function ov(h){const o=$("ov");o.innerHTML=`<div class="sh" role="dialog" aria-modal="true">${h}</div>`;o.hidden=false}
+function close(){$("ov").hidden=true;$("ov").innerHTML=""}
+function form(title,fs,ok,btn){ov(`<h3>${title}</h3>${fs.map(f=>`<label>${f.l}${f.t==="area"?`<textarea id="f_${f.k}" rows="4"></textarea>`:f.t==="sel"?`<select id="f_${f.k}">${f.o.map(o=>`<option>${o}</option>`).join("")}</select>`:`<input id="f_${f.k}">`}</label>`).join("")}<button class="pri wide" id="okb">${btn}</button>`);
+ $("okb").onclick=()=>{const v={};fs.forEach(f=>v[f.k]=$("f_"+f.k).value.trim());if(!v[fs[0].k]){toast("İlk alanı boş bırakma");return}ok(v);close();render()}}
+function live(p){return p.url?`<div class="live" id="lv"><code>${esc(p.url)}</code><button class="ghost" data-a="copy" data-id="${p.id}">Kopyala</button></div>`:`<p class="sub" id="lv" style="margin-top:12px">Dosyaları gönderince canlı bağlantı burada görünecek.</p>`}
+function sheet(id){FL=[];const p=find(id);ov(`<div class="ph"><div class="av" style="--h:${HUE[S.projects.indexOf(p)%6]}">${esc(p.name[0])}</div><div><h3 style="margin:0">${esc(p.name)}</h3><p class="sub" style="margin:0">${esc(p.desc)}</p></div></div>
+<label>İlerleme: <b id="pv">%${p.pct}</b><input type="range" id="rg" min="0" max="100" step="5" value="${p.pct}"></label>
+<label class="drop">Dosyaları seç<input type="file" id="fl" multiple hidden></label><label class="drop" style="margin-top:8px">Klasör seç (bilgisayarda)<input type="file" id="fd" webkitdirectory hidden></label><div id="fls" class="sub" style="margin:8px 0 0"></div>
+<button class="pri wide" id="pushb">${ic("gh",18)} GitHub’a gönder</button><div id="lg"></div>${live(p)}<button class="ghost wide" data-a="close">Kapat</button>`);
+ $("rg").oninput=e=>{p.pct=+e.target.value;p.upd="Şimdi";$("pv").textContent="%"+p.pct;save();render()};
+ const pick=e=>{FL=[...e.target.files];$("fls").textContent=FL.slice(0,6).map(f=>f.name).join(", ")+(FL.length>6?" +"+(FL.length-6)+" dosya":"")};$("fl").onchange=pick;$("fd").onchange=pick;
+ $("pushb").onclick=async()=>{
+  if(!G){toast("Önce GitHub’a bağlan");return}
+  if(!FL.length){toast("Önce dosya seç");return}
+  const repo=p.repo?p.repo.split("/")[1]:(slug(p.name)||"proje");const L=$("lg");
+  const say=(t,c)=>L.insertAdjacentHTML("beforeend",`<p class="${c||""}">${esc(t)}</p>`);
+  $("pushb").disabled=true;L.innerHTML="";
+  try{
+   say("Repo hazırlanıyor: "+repo);
+   let r=await post({mode:"prepare",repo,desc:p.desc});if(!r.ok)throw new Error(r.error||"Repo hazırlanamadı");
+   let n=0;
+   for(const f of FL){
+    const path=f.webkitRelativePath?f.webkitRelativePath.split("/").slice(1).join("/"):f.name;
+    if(f.size>3e6){say("Atlandı (3 MB üstü): "+path);continue}
+    r=await post({mode:"file",repo,path,content:await b64(f)});if(!r.ok)throw new Error(path+": "+(r.error||"yüklenemedi"));
+    n++;say("Yüklendi: "+path)}
+   say("Canlıya alınıyor…");
+   r=await post({mode:"publish",repo});
+   p.repo=G.user.login+"/"+repo;p.url=r.url||p.url;p.upd="Şimdi";
+   S.acts.unshift({i:"code",t:p.name+" GitHub’a gönderildi ("+n+" dosya)",w:"Şimdi"});save();render();
+   say("Bitti! "+n+" dosya gönderildi.","ok");if($("lv"))$("lv").outerHTML=live(p);
+  }catch(e){say("Hata: "+e.message)}
+  if($("pushb"))$("pushb").disabled=false;FL=[];
+ };
+}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-a]");if(!t){if(e.target.id==="ov")close();return}const a=t.dataset.a;
+ if(a==="goto"){view=t.dataset.v;show();render();window.scrollTo(0,0)}
+ else if(a==="proj")sheet(t.dataset.id);
+ else if(a==="close")close();
+ else if(a==="theme"){S.theme=S.theme==="dark"?"light":"dark";theme();save()}
+ else if(a==="name")askName();
+ else if(a==="gh"){location.href=G?"/api/logout":"/api/login"}
+ else if(a==="imp"){imp(t.dataset.r);save();render()}
+ else if(a==="impall"){actRepos().forEach(r=>imp(r.full));save();render();toast("Aktif repolar eklendi")}
+ else if(a==="copy"){try{navigator.clipboard.writeText(find(t.dataset.id).url);toast("Bağlantı kopyalandı")}catch(x){toast("Kopyalanamadı")}}
+ else if(a==="newp")form("Yeni proje",[{k:"name",l:"Proje adı"},{k:"desc",l:"Kısa açıklama"},{k:"type",l:"Tür",t:"sel",o:TYPES}],v=>{S.projects.unshift({id:"p"+Date.now(),name:v.name,desc:v.desc||"Açıklama yok",pct:0,tags:[v.type],type:v.type,upd:"Şimdi",url:""});S.acts.unshift({i:"folderc",t:v.name+" projesi oluşturuldu",w:"Şimdi"});save()},"Projeyi oluştur");
+ else if(a==="newi")form("Yeni fikir",[{k:"t",l:"Fikrin adı"},{k:"d",l:"Kısaca anlat",t:"area"}],v=>{S.ideas.unshift({t:v.t,d:v.d||"",tag:"Yeni",w:"Bugün",i:"bulb"});S.acts.unshift({i:"bulb",t:"Yeni fikir eklendi: "+v.t,w:"Şimdi"});save()},"Fikri kaydet");
+ else if(a==="note")form("Not yaz",[{k:"n",l:"Notun",t:"area"}],v=>{S.acts.unshift({i:"note",t:"Yeni not: "+v.n.slice(0,60),w:"Şimdi"});save()},"Notu kaydet")});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")close();if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.a==="proj")sheet(e.target.dataset.id)});
+$("q").oninput=e=>{qs=e.target.value.trim().toLowerCase();render()};
+$("si").innerHTML=ic("search",18);$("ti").innerHTML=ic("sun");$("bi").innerHTML=ic("bell");
+$("q1").innerHTML=ic("plus")+"Yeni Proje Oluştur";$("q2").innerHTML=ic("bulb")+"Fikir Ekle";$("q3").innerHTML=ic("gh")+"GitHub Bağlantısı Ekle";$("q4").innerHTML=ic("note")+"Not Yaz";
+$("fab").innerHTML=ic("plus",24);theme();show();render();
+if(new URLSearchParams(location.search).get("hata")){toast("GitHub girişi tamamlanamadı, tekrar dene");history.replaceState(null,"","/")}
+loadGH().then(()=>{if(!S.name&&!S.skip){S.skip=true;save();askName()}});
+</script>
+</body>
+</html>
