@@ -97,7 +97,7 @@ main{padding:16px 14px 100px;min-width:0}
 .bnav button,.side nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;font-size:.68rem;color:var(--mu);padding:6px 0;border-radius:10px}
 .bnav button.on{color:var(--ac)}
 #ov{position:fixed;inset:0;z-index:40;background:rgba(5,8,20,.6);display:flex;align-items:flex-end;justify-content:center}
-.sh{background:var(--p);width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));border:1px solid var(--ln)}
+.sh{background:var(--p);width:100%;max-width:720px;max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));border:1px solid var(--ln)}
 .sh h3{margin:0 0 12px;font-size:1.2rem}
 .sh label{display:block;margin-top:14px;color:var(--mu);font-size:.85rem}
 .sh input:not([type=range]):not([type=file]),.sh textarea,.sh select{display:block;width:100%;margin-top:6px;background:var(--p2);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;color:var(--ink)}
@@ -123,6 +123,11 @@ main{padding:16px 14px 100px;min-width:0}
  #toast{bottom:24px}
 }
 @media (min-width:1280px){.cols:not(.one){grid-template-columns:minmax(0,1fr) 330px}}
+.sh h4{margin:20px 0 6px;font-size:1rem}.sh h4 small{color:var(--mu);font-weight:400}
+.add{display:flex;gap:8px;margin-top:10px}.add input{flex:1;margin-top:0!important}
+.ck{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--ln);background:none}.ck.on{background:var(--ac);border-color:var(--ac)}
+.tabs{display:flex;gap:6px;margin:14px 0 4px;border-bottom:1px solid var(--ln)}.tabs button{background:none;border:0;padding:9px 14px;color:var(--mu);border-bottom:2px solid transparent;font-weight:700}.tabs button.on{color:var(--ac);border-color:var(--ac)}
+.row2{display:flex;gap:8px;margin-top:20px}.row2 button{flex:1}.sh a{color:var(--ac)}
 .fab{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:25;width:52px;height:52px;border-radius:16px;border:0;background:var(--ac);color:var(--on);display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
 @media (max-width:639px){
  .hero p,.hero .pri,.dm{display:none}
@@ -165,7 +170,7 @@ main{padding:16px 14px 100px;min-width:0}
      <section class="card" data-v="dash projects"><div class="hd"><div><h2 id="pt">Aktif Projeler</h2><p class="sub">Üzerinde çalıştığın projelere hızlıca göz at.</p></div></div><div class="pgrid" id="projs"></div></section>
      <section class="card" data-v="dash ideas"><div class="hd"><div><h2>Son Fikirler</h2><p class="sub">Zihninde dolaşan projeleri unutma.</p></div><button data-a="newi">+ Fikir ekle</button></div><ul class="list" id="ideas"></ul></section>
      <section class="card" data-v="github"><h2>GitHub bağlantısı</h2><p class="sub">Bağlanınca repolarını okur, aktif olanları bulur ve dosya yüklemeni sağlar.</p><div class="live" style="margin:0"><span id="ghs"></span><button class="ghost" data-a="gh" id="ghb"></button></div><p class="sub" id="sync" style="margin:10px 0 0"></p><ul class="list" id="repos" style="margin-top:12px"></ul></section>
-     <section class="card empty" data-v="archive">Arşivlenen proje yok. Biten projelerini buraya taşıyacaksın.</section>
+     <section class="card" data-v="archive"><h2>Arşiv</h2><div class="pgrid" id="arch" style="margin-top:12px"></div></section>
     </div>
     <div>
      <section class="card" data-v="dash log"><div class="hd"><h2>Son Aktiviteler</h2></div><ul class="list" id="acts"></ul></section>
@@ -195,7 +200,7 @@ try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catc
 S.gh=false;
 let tm=null,cloudOK=false;
 const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-const snap=()=>({v:1,ts:S.ts||0,name:S.name,theme:S.theme,projects:S.projects,ideas:S.ideas,acts:S.acts});
+const snap=()=>({v:1,ts:S.ts||0,name:S.name,theme:S.theme,projects:S.projects,ideas:S.ideas,acts:S.acts,hidden:S.hidden||[]});
 const save=()=>{S.ts=Date.now();store();if(cloudOK){clearTimeout(tm);tm=setTimeout(push,1500)}};
 function setSync(st){const e=$("sync");if(e)e.textContent=st==="ok"?"Veriler GitHub’da yedekte (özel repo: buildlog-data).":st==="err"?"Veriler buluta kaydedilemedi, bir sonraki değişiklikte tekrar denenecek.":""}
 async function push(){try{const r=await fetch("/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:snap()})});setSync(r.ok?"ok":"err")}catch(e){setSync("err")}}
@@ -205,22 +210,22 @@ function merge(d){const ids=new Set((d.projects||[]).map(p=>p.id));const it=new 
 async function cloudSync(){try{const r=await fetch("/api/data");if(!r.ok)throw 0;const j=await r.json();const d=j.data;cloudOK=true;
  const has=S.projects.length||S.ideas.length||S.acts.length||S.name;
  if(d&&!S.synced){merge(d);S.synced=true;S.ts=Date.now();store();theme();await push();toast("Veriler eşitlendi")}
- else if(d&&(d.ts||0)>(S.ts||0)){S.name=d.name||S.name;S.theme=d.theme||S.theme;S.projects=d.projects||[];S.ideas=d.ideas||[];S.acts=d.acts||[];S.ts=d.ts;S.synced=true;store();theme();setSync("ok");toast("Veriler eşitlendi")}
+ else if(d&&(d.ts||0)>(S.ts||0)){S.name=d.name||S.name;S.theme=d.theme||S.theme;S.projects=d.projects||[];S.ideas=d.ideas||[];S.acts=d.acts||[];S.hidden=d.hidden||[];S.ts=d.ts;S.synced=true;store();theme();setSync("ok");toast("Veriler eşitlendi")}
  else if((!d&&has)||(d&&(S.ts||0)>(d.ts||0))){S.synced=true;store();await push()}
  else{S.synced=true;store();setSync("ok")}
 }catch(e){cloudOK=false;setSync("err")}}
 const find=id=>S.projects.find(p=>p.id===id);
 const un=()=>(S.name||"kullanici").toLowerCase().replace(/[^a-z0-9]+/g,"")||"kullanici";
 let G=null,FL=[];
-const ago=iso=>{const m=(Date.now()-new Date(iso))/6e4;if(m<60)return Math.max(1,Math.round(m))+" dk önce";if(m<1440)return Math.round(m/60)+" saat önce";if(m<43200)return Math.round(m/1440)+" gün önce";return Math.round(m/43200)+" ay önce"};
+const ago=iso=>{const m=(Date.now()-new Date(iso))/6e4;if(m<1)return "şimdi";if(m<60)return Math.round(m)+" dk önce";if(m<1440)return Math.round(m/60)+" saat önce";if(m<43200)return Math.round(m/1440)+" gün önce";return Math.round(m/43200)+" ay önce"};
 const slug=s=>s.toLowerCase().replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 const post=async b=>{const r=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});let j={};try{j=await r.json()}catch(e){}return {...j,ok:r.ok}};
 const b64=f=>new Promise((ok,no)=>{const x=new FileReader();x.onload=()=>ok(x.result.split(",")[1]);x.onerror=no;x.readAsDataURL(f)});
-const actRepos=()=>G?G.repos.filter(r=>!r.fork&&!r.archived&&Date.now()-new Date(r.pushed)<2592e6&&!S.projects.some(p=>p.repo===r.full)):[];
+const actRepos=()=>G?G.repos.filter(r=>!r.fork&&!r.archived&&r.name!=="buildlog-data"&&!(S.hidden||[]).includes(r.full)&&Date.now()-new Date(r.pushed)<2592e6&&!S.projects.some(p=>p.repo===r.full)):[];
 function imp(full){const r=G&&G.repos.find(x=>x.full===full);if(!r||S.projects.some(p=>p.repo===full))return;const tp=r.topics.join(" ");const type=/android|ios|react-native|flutter|expo|mobile/.test(tp)?"Mobil App":/game|unity|godot/.test(tp)?"Oyun":"Web App";
- S.projects.unshift({id:"p"+Date.now()+Math.floor(Math.random()*1e4),name:r.name,desc:r.desc||"Açıklama yok",pct:0,tags:[r.lang,...r.topics.slice(0,2)].filter(Boolean).length?[r.lang,...r.topics.slice(0,2)].filter(Boolean):["Proje"],type,upd:ago(r.pushed),url:r.home||"",repo:r.full});
+ S.projects.unshift({id:"p"+Date.now()+Math.floor(Math.random()*1e4),name:r.name,desc:r.desc||"Açıklama yok",pct:0,tags:[r.lang,...r.topics.slice(0,2)].filter(Boolean).length?[r.lang,...r.topics.slice(0,2)].filter(Boolean):["Proje"],type,upd:"",at:new Date(r.pushed).getTime(),url:r.home||"",repo:r.full});
  S.acts.unshift({i:"gh",t:r.name+" GitHub’dan eklendi",w:"Şimdi"})}
-function syncProjects(){S.projects.forEach(p=>{const r=p.repo&&G.repos.find(x=>x.full===p.repo);if(r){p.upd=ago(r.pushed);if(r.home&&!p.url)p.url=r.home}})}
+function syncProjects(){S.projects.forEach(p=>{const r=p.repo&&G.repos.find(x=>x.full===p.repo);if(r){p.at=new Date(r.pushed).getTime();if(r.home&&!p.url)p.url=r.home}})}
 async function loadGH(){try{const r=await fetch("/api/repos");if(!r.ok)throw 0;G=await r.json();S.gh=true}catch(e){G=null;S.gh=false;render();return}
  await cloudSync();if(!S.name)S.name=G.user.name||G.user.login;syncProjects();store();render()}
 function askName(){form("Adın ne?",[{k:"n",l:"Sana nasıl hitap edelim?"}],v=>{S.name=v.n;save()},"Kaydet");$("f_n").value=S.name||""}
@@ -230,60 +235,95 @@ function theme(){document.documentElement.setAttribute("data-theme",S.theme)}
 function nav(){const h=(c)=>NAV.map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[1]}</span></button>`).join("");
  $("snav").innerHTML=h();$("bnav").innerHTML=NAV.slice(0,5).map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[0]==="log"?"Günlük":n[1]}</span></button>`).join("")}
 function show(){document.querySelectorAll("[data-v]").forEach(e=>{if(e.dataset.a)return;e.hidden=!e.dataset.v.split(" ").includes(view)});$("cols").classList.toggle("one",view!=="dash");$("pt").textContent=view==="projects"?"Tüm Projeler":"Aktif Projeler";nav()}
-function card(p){const h=HUE[S.projects.indexOf(p)%6];return `<article class="card pc" data-a="proj" data-id="${p.id}" tabindex="0"><div class="ph"><div class="av" style="--h:${h}">${esc(p.name[0])}</div><div><b>${esc(p.name)}</b><p>${esc(p.desc)}</p></div></div><div class="bar"><div class="pbar"><i style="width:${p.pct}%"></i></div><span>%${p.pct}</span></div><div class="tags">${p.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div><div class="pf"><small>Son güncelleme: ${p.upd}</small><span class="gh ${p.url?"on":""}" title="${p.url?"Canlı":"Henüz yayında değil"}">${ic("gh")}</span></div></article>`}
+function card(p){const h=HUE[S.projects.indexOf(p)%6];return `<article class="card pc" data-a="proj" data-id="${p.id}" tabindex="0"><div class="ph"><div class="av" style="--h:${h}">${esc(p.name[0])}</div><div><b>${esc(p.name)}</b><p>${esc(p.desc)}</p></div></div><div class="bar"><div class="pbar"><i style="width:${p.pct}%"></i></div><span>%${p.pct}</span></div><div class="tags">${p.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div><div class="pf"><small>Son güncelleme: ${ago(p.at)}</small><span class="gh ${p.url?"on":""}" title="${p.url?"Canlı":"Henüz yayında değil"}">${ic("gh")}</span></div></article>`}
 function render(){
- const P=S.projects,act=P.filter(p=>p.pct<100);
- const AR=actRepos();$("smart").innerHTML=view==="dash"&&AR.length?`<div class="card live" style="margin:0 0 16px"><span>${AR.length} aktif repo bulundu</span><button class="pri" data-a="impall">Hepsini ekle</button></div>`:"";
+ S.acts.forEach(a=>{a.at=a.at||S.ts||Date.now()});S.ideas.forEach(i=>{i.at=i.at||S.ts||Date.now()});S.projects.forEach(p=>{p.at=p.at||S.ts||Date.now()});
+ const P=S.projects.filter(p=>!p.arch),act=P.filter(p=>p.pct<100);
+ $("arch").innerHTML=S.projects.filter(p=>p.arch).map(card).join("")||`<p class="empty">Arşivlenen proje yok.</p>`;
+ const AR=actRepos();$("smart").innerHTML=view==="dash"&&AR.length?`<div class="card live" style="margin:0 0 16px"><span>${AR.length} aktif repo bulundu</span><span><button class="pri" data-a="impall">Hepsini ekle</button> <button class="ib" data-a="dis" aria-label="Önerileri kapat">×</button></span></div>`:"";
  $("stats").innerHTML=[["folder","Toplam Proje",P.length],["bulb","Fikir",S.ideas.length],["code","Aktif Geliştirme",act.length],["check","Tamamlanan",P.filter(p=>p.pct===100).length]].map(s=>`<div class="card stat"><div class="ico">${ic(s[0])}</div><small>${s[1]}</small><b>${s[2]}</b></div>`).join("");
  const L=(view==="projects"?P:P.filter(p=>p.pct<100)).filter(p=>match(p.name+p.desc+p.tags.join(" ")));
  $("projs").innerHTML=L.length?L.map(card).join(""):`<p class="empty">${P.length?"Eşleşen proje yok.":"Henüz proje yok. “Yeni Proje” ile ilkini ekle."}</p>`;
  const ID=S.ideas.filter(i=>match(i.t+i.d));
- $("ideas").innerHTML=ID.length?ID.map(i=>`<li><div class="li">${ic(i.i)}</div><div class="t"><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><span class="chip">${esc(i.tag)}</span><span class="d">${i.w}</span></li>`).join(""):`<li class="empty" style="display:block">Henüz fikir yok.</li>`;
- $("acts").innerHTML=!S.acts.length?`<li class="empty" style="display:block">Henüz aktivite yok.</li>`:S.acts.slice(0,view==="log"?50:6).map(a=>`<li><div class="li">${ic(a.i)}</div><div class="t"><b>${esc(a.t)}</b><small>${a.w}</small></div></li>`).join("");
+ $("ideas").innerHTML=ID.length?ID.map(i=>`<li><div class="li">${ic(i.i)}</div><div class="t"><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><span class="chip">${esc(i.tag)}</span><span class="d">${ago(i.at)}</span></li>`).join(""):`<li class="empty" style="display:block">Henüz fikir yok.</li>`;
+ $("acts").innerHTML=!S.acts.length?`<li class="empty" style="display:block">Henüz aktivite yok.</li>`:S.acts.slice(0,view==="log"?50:6).map(a=>`<li><div class="li">${ic(a.i)}</div><div class="t"><b>${esc(a.t)}</b><small>${ago(a.at)}</small></div></li>`).join("");
  const cnt=TYPES.map(t=>P.filter(p=>p.type===t).length);let acc=0;const n=P.length||1;const g=P.length?cnt.map((c,i)=>{const s=acc/n*100;acc+=c;return `${COL[i]} ${s}% ${acc/n*100}%`}).join(","):"var(--ln) 0 100%";
  $("dn").innerHTML=`<div class="ring" style="background:conic-gradient(${g})"><div><span><b>${P.length}</b><br>Proje</span></div></div><div class="lg">${TYPES.map((t,i)=>`<div><i style="background:${COL[i]}"></i>${t}<b>${cnt[i]}</b></div>`).join("")}</div>`;
  $("ghs").textContent=S.gh?"Bağlı: @"+(G?G.user.login:""):"Bağlı değil";const nm=S.name;$("hi").textContent=nm?"👋 Tekrar hoş geldin, "+nm+"!":"👋 Hoş geldin!";$("mi").textContent=nm?nm[0].toUpperCase():"?";$("mn").textContent=nm||"Adını ekle";$("ghb").textContent=S.gh?"Bağlantıyı kes":"GitHub’a bağlan";
- $("repos").innerHTML=G?G.repos.filter(r=>!r.fork&&!r.archived).map(r=>{const imp=S.projects.some(p=>p.repo===r.full);const ac=Date.now()-new Date(r.pushed)<2592e6;return `<li><div class="li">${ic("gh",18)}</div><div class="t"><b>${esc(r.name)}</b><small>${ac?"Aktif":"Durağan"}: ${ago(r.pushed)}${r.lang?" – "+esc(r.lang):""}</small></div>${imp?`<span class="chip">Ekli</span>`:`<button class="ghost" data-a="imp" data-r="${esc(r.full)}">İçe aktar</button>`}</li>`}).join(""):"";
+ $("repos").innerHTML=G?G.repos.filter(r=>!r.fork&&!r.archived&&r.name!=="buildlog-data").map(r=>{const imp=S.projects.some(p=>p.repo===r.full);const ac=Date.now()-new Date(r.pushed)<2592e6;return `<li><div class="li">${ic("gh",18)}</div><div class="t"><b>${esc(r.name)}</b><small>${ac?"Aktif":"Durağan"}: ${ago(r.pushed)}${r.lang?" – "+esc(r.lang):""}</small></div>${imp?`<span class="chip">Ekli</span>`:`<button class="ghost" data-a="imp" data-r="${esc(r.full)}">İçe aktar</button>`}</li>`}).join(""):"";
 }
 function ov(h){const o=$("ov");o.innerHTML=`<div class="sh" role="dialog" aria-modal="true">${h}</div>`;o.hidden=false}
 function close(){$("ov").hidden=true;$("ov").innerHTML=""}
 function form(title,fs,ok,btn){ov(`<h3>${title}</h3>${fs.map(f=>`<label>${f.l}${f.t==="area"?`<textarea id="f_${f.k}" rows="4"></textarea>`:f.t==="sel"?`<select id="f_${f.k}">${f.o.map(o=>`<option>${o}</option>`).join("")}</select>`:`<input id="f_${f.k}">`}</label>`).join("")}<button class="pri wide" id="okb">${btn}</button>`);
  $("okb").onclick=()=>{const v={};fs.forEach(f=>v[f.k]=$("f_"+f.k).value.trim());if(!v[fs[0].k]){toast("İlk alanı boş bırakma");return}ok(v);close();render()}}
 function live(p){return p.url?`<div class="live" id="lv"><code>${esc(p.url)}</code><button class="ghost" data-a="copy" data-id="${p.id}">Kopyala</button></div>`:`<p class="sub" id="lv" style="margin-top:12px">Dosyaları gönderince canlı bağlantı burada görünecek.</p>`}
-function sheet(id){FL=[];const p=find(id);ov(`<div class="ph"><div class="av" style="--h:${HUE[S.projects.indexOf(p)%6]}">${esc(p.name[0])}</div><div><h3 style="margin:0">${esc(p.name)}</h3><p class="sub" style="margin:0">${esc(p.desc)}</p></div></div>
-<label>İlerleme: <b id="pv">%${p.pct}</b><input type="range" id="rg" min="0" max="100" step="5" value="${p.pct}"></label>
-<label class="drop">Dosyaları seç<input type="file" id="fl" multiple hidden></label><label class="drop" style="margin-top:8px">Klasör seç (bilgisayarda)<input type="file" id="fd" webkitdirectory hidden></label><div id="fls" class="sub" style="margin:8px 0 0"></div>
-<button class="pri wide" id="pushb">${ic("gh",18)} GitHub’a gönder</button><div id="lg"></div>${live(p)}<button class="ghost wide" data-a="close">Kapat</button>`);
- $("rg").oninput=e=>{p.pct=+e.target.value;p.upd="Şimdi";$("pv").textContent="%"+p.pct;save();render()};
- const pick=e=>{FL=[...e.target.files];$("fls").textContent=FL.slice(0,6).map(f=>f.name).join(", ")+(FL.length>6?" +"+(FL.length-6)+" dosya":"")};$("fl").onchange=pick;$("fd").onchange=pick;
- $("pushb").onclick=async()=>{
-  if(!G){toast("Önce GitHub’a bağlan");return}
-  if(!FL.length){toast("Önce dosya seç");return}
-  const repo=p.repo?p.repo.split("/")[1]:(slug(p.name)||"proje");const L=$("lg");
-  const say=(t,c)=>L.insertAdjacentHTML("beforeend",`<p class="${c||""}">${esc(t)}</p>`);
-  $("pushb").disabled=true;L.innerHTML="";
-  try{
-   say("Repo hazırlanıyor: "+repo);
-   let r=await post({mode:"prepare",repo,desc:p.desc});if(!r.ok)throw new Error(r.error||"Repo hazırlanamadı");
-   let n=0;
-   for(const f of FL){
-    const path=f.webkitRelativePath?f.webkitRelativePath.split("/").slice(1).join("/"):f.name;
-    if(f.size>3e6){say("Atlandı (3 MB üstü): "+path);continue}
-    r=await post({mode:"file",repo,path,content:await b64(f)});if(!r.ok)throw new Error(path+": "+(r.error||"yüklenemedi"));
-    n++;say("Yüklendi: "+path)}
-   say("Canlıya alınıyor…");
-   r=await post({mode:"publish",repo});
-   p.repo=G.user.login+"/"+repo;p.url=r.url||p.url;p.upd="Şimdi";
-   S.acts.unshift({i:"code",t:p.name+" GitHub’a gönderildi ("+n+" dosya)",w:"Şimdi"});save();render();
-   say("Bitti! "+n+" dosya gönderildi.","ok");if($("lv"))$("lv").outerHTML=live(p);
-  }catch(e){say("Hata: "+e.message)}
-  if($("pushb"))$("pushb").disabled=false;FL=[];
- };
+let CP=null,TAB="gen",PD={};
+const pickF=e=>{FL=[...e.target.files];$("fls").textContent=FL.slice(0,6).map(f=>f.name).join(", ")+(FL.length>6?" +"+(FL.length-6)+" dosya":"")};
+const ghView=d=>d.error?`<p class="sub">Veri alınamadı: ${esc(d.error)}</p>`:`<p class="sub">⭐ ${d.info.stars}, dal: ${esc(d.info.branch)}, <a href="${esc(d.info.url)}" target="_blank" rel="noopener">GitHub’da aç</a>, <a href="#" data-a="rf">yenile</a></p>
+<h4>Yayın durumu</h4>${d.deploy?`<div class="live"><span>${esc(d.deploy.state)} (${esc(d.deploy.env)})</span>${d.deploy.url?`<a href="${esc(d.deploy.url)}" target="_blank" rel="noopener">Aç</a>`:""}</div>`:`<p class="sub">Henüz dağıtım kaydı yok.</p>`}
+<h4>Açık issue’lar</h4><ul class="list">${d.issues.map(i=>`<li><div class="t"><b>#${i.n} ${esc(i.title)}</b></div><button class="ghost" data-a="cls" data-n="${i.n}">Kapat</button></li>`).join("")||`<li class="sub">Açık issue yok.</li>`}</ul>
+<div class="add"><input id="ni" placeholder="Yeni issue başlığı…"><button class="pri" data-a="isa">Ekle</button></div>
+<h4>Son commit’ler</h4><ul class="list">${d.commits.map(c=>`<li><div class="t"><b>${esc(c.msg)}</b><small>${esc(c.who)}, ${ago(c.date)}</small></div></li>`).join("")}</ul>`;
+async function loadRepo(p){PD[p.id]={loading:1};try{const r=await fetch("/api/repo?r="+encodeURIComponent(p.repo));const d=await r.json();PD[p.id]=r.ok?d:{error:d.error||"hata"};if(r.ok&&d.deploy&&d.deploy.url&&d.deploy.env==="Production"&&!p.url){p.url=d.deploy.url;save();render()}}catch(e){PD[p.id]={error:"bağlantı"}}if(CP===p.id&&TAB==="gh"&&!$("ov").hidden)sheet(p.id)}
+async function ghAct(b){const p=find(CP);try{const r=await fetch("/api/repo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({r:p.repo,...b})});const j=await r.json().catch(()=>({}));toast(r.ok?"Tamam":(j.error||"Hata"))}catch(e){toast("Bağlantı hatası")}PD[p.id]=null;sheet(p.id,"gh")}
+async function doPush(p){
+ if(!G){toast("Önce GitHub’a bağlan");return}
+ if(!FL.length){toast("Önce dosya seç");return}
+ const repo=p.repo?p.repo.split("/")[1]:(slug(p.name)||"proje");const L=$("lg");
+ const say=(t,c)=>L.insertAdjacentHTML("beforeend",`<p class="${c||""}">${esc(t)}</p>`);
+ $("pushb").disabled=true;L.innerHTML="";
+ try{
+  say("Repo hazırlanıyor: "+repo);
+  let r=await post({mode:"prepare",repo,desc:p.desc});if(!r.ok)throw new Error(r.error||"Repo hazırlanamadı");
+  let n=0;
+  for(const f of FL){
+   const path=f.webkitRelativePath?f.webkitRelativePath.split("/").slice(1).join("/"):f.name;
+   if(f.size>3e6){say("Atlandı (3 MB üstü): "+path);continue}
+   r=await post({mode:"file",repo,path,content:await b64(f)});if(!r.ok)throw new Error(path+": "+(r.error||"yüklenemedi"));
+   n++;say("Yüklendi: "+path)}
+  say("Canlıya alınıyor…");
+  r=await post({mode:"publish",repo});
+  p.repo=G.user.login+"/"+repo;p.url=r.url||p.url;p.at=Date.now();PD[p.id]=null;
+  S.acts.unshift({i:"code",t:p.name+" GitHub’a gönderildi ("+n+" dosya)"});save();render();
+  say("Bitti! "+n+" dosya gönderildi.","ok");if($("lv"))$("lv").outerHTML=live(p);
+ }catch(e){say("Hata: "+e.message)}
+ if($("pushb"))$("pushb").disabled=false;FL=[];
+}
+function sheet(id,tab){const p=find(id);if(!p)return;TAB=tab||(id===CP?TAB:"gen");CP=id;FL=[];
+ const tk=p.tasks||[];if(tk.length)p.pct=Math.round(tk.filter(x=>x.d).length/tk.length*100);
+ let b="";
+ if(TAB==="gen")b=`<label>Notlar<textarea id="nt" rows="3" placeholder="Bu projede ne yapıyorsun?">${esc(p.note||"")}</textarea></label>
+<h4>Görevler ${tk.length?`<small>${tk.filter(x=>x.d).length}/${tk.length}</small>`:""}</h4>
+<ul class="list">${tk.map((x,k)=>`<li><button class="ck ${x.d?"on":""}" data-a="tk" data-i="${k}" aria-label="Tamamla"></button><span class="t" style="${x.d?"text-decoration:line-through;color:var(--mu)":""}">${esc(x.t)}</span><button class="ib" data-a="tkx" data-i="${k}" aria-label="Sil">×</button></li>`).join("")}</ul>
+<div class="add"><input id="nk" placeholder="Yeni görev…"><button class="pri" data-a="tka">Ekle</button></div>
+${tk.length?"":`<label>İlerleme: <b id="pv">%${p.pct}</b><input type="range" id="rg" min="0" max="100" step="5" value="${p.pct}"></label>`}
+<h4>Canlı bağlantı</h4>${live(p)}`;
+ else if(TAB==="gh")b=!p.repo?`<p class="sub" style="margin-top:14px">Bu proje henüz bir GitHub reposuna bağlı değil. “Yükle” sekmesinden dosya gönderince repo oluşur.</p>`:!G?`<p class="sub" style="margin-top:14px">Verileri görmek için GitHub’a bağlan.</p>`:(PD[p.id]&&!PD[p.id].loading?ghView(PD[p.id]):`<p class="sub" style="margin-top:14px">Yükleniyor…</p>`);
+ else b=`<label class="drop">Dosyaları seç<input type="file" id="fl" multiple hidden></label><label class="drop" style="margin-top:8px">Klasör seç (bilgisayarda)<input type="file" id="fd" webkitdirectory hidden></label><div id="fls" class="sub" style="margin:8px 0 0"></div><button class="pri wide" id="pushb">${ic("gh",18)} GitHub’a gönder</button><div id="lg"></div>${live(p)}`;
+ ov(`<div class="ph"><div class="av" style="--h:${HUE[S.projects.indexOf(p)%6]}">${esc(p.name[0])}</div><div><h3 style="margin:0">${esc(p.name)}</h3><p class="sub" style="margin:0">${esc(p.desc)}</p></div></div>
+<div class="bar"><div class="pbar"><i style="width:${p.pct}%"></i></div><span>%${p.pct}</span></div>
+<div class="tabs">${[["gen","Genel"],["gh","GitHub"],["up","Yükle"]].map(x=>`<button class="${TAB===x[0]?"on":""}" data-a="tab" data-t="${x[0]}">${x[1]}</button>`).join("")}</div>${b}
+<div class="row2"><button class="ghost" data-a="arc">${p.arch?"Arşivden çıkar":"Arşivle"}</button><button class="ghost" data-a="del">Sil</button><button class="ghost" data-a="close">Kapat</button></div>`);
+ const nt=$("nt");if(nt)nt.oninput=()=>{p.note=nt.value;save()};
+ const rg=$("rg");if(rg)rg.oninput=e=>{p.pct=+e.target.value;p.at=Date.now();$("pv").textContent="%"+p.pct;save();render()};
+ if($("fl")){$("fl").onchange=pickF;$("fd").onchange=pickF}
+ if($("pushb"))$("pushb").onclick=()=>doPush(p);
+ if(TAB==="gh"&&p.repo&&G&&!PD[p.id])loadRepo(p);
 }
 document.addEventListener("click",e=>{const t=e.target.closest("[data-a]");if(!t){if(e.target.id==="ov")close();return}const a=t.dataset.a;
  if(a==="goto"){view=t.dataset.v;show();render();window.scrollTo(0,0)}
- else if(a==="proj")sheet(t.dataset.id);
+ else if(a==="proj")sheet(t.dataset.id,"gen");
  else if(a==="close")close();
+ else if(a==="tab")sheet(CP,t.dataset.t);
+ else if(a==="tk"){const p=find(CP),x=p.tasks[+t.dataset.i];x.d=!x.d;p.at=Date.now();save();render();sheet(CP,"gen")}
+ else if(a==="tkx"){const p=find(CP);p.tasks.splice(+t.dataset.i,1);save();render();sheet(CP,"gen")}
+ else if(a==="tka"){const v=$("nk").value.trim();if(!v)return;const p=find(CP);(p.tasks=p.tasks||[]).push({t:v,d:false});save();render();sheet(CP,"gen")}
+ else if(a==="isa"){const v=$("ni").value.trim();if(v)ghAct({mode:"issue",title:v})}
+ else if(a==="cls")ghAct({mode:"close",n:+t.dataset.n})
+ else if(a==="rf"){e.preventDefault();PD[CP]=null;sheet(CP,"gh")}
+ else if(a==="arc"){const p=find(CP);p.arch=!p.arch;save();close();render();toast(p.arch?"Arşivlendi":"Arşivden çıkarıldı")}
+ else if(a==="del"){if(confirm("Panelden silinsin mi? GitHub reposu silinmez.")){S.projects=S.projects.filter(x=>x.id!==CP);save();close();render()}}
+ else if(a==="dis"){S.hidden=[...(S.hidden||[]),...actRepos().map(r=>r.full)];save();render()}
  else if(a==="theme"){S.theme=S.theme==="dark"?"light":"dark";theme();save()}
  else if(a==="name")askName();
  else if(a==="gh"){location.href=G?"/api/logout":"/api/login"}
@@ -297,7 +337,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")close();if(e.key==="
 $("q").oninput=e=>{qs=e.target.value.trim().toLowerCase();render()};
 $("si").innerHTML=ic("search",18);$("ti").innerHTML=ic("sun");$("bi").innerHTML=ic("bell");
 $("q1").innerHTML=ic("plus")+"Yeni Proje Oluştur";$("q2").innerHTML=ic("bulb")+"Fikir Ekle";$("q3").innerHTML=ic("gh")+"GitHub Bağlantısı Ekle";$("q4").innerHTML=ic("note")+"Not Yaz";
-$("fab").innerHTML=ic("plus",24);theme();show();render();
+setInterval(()=>{if($("ov").hidden)render()},60000);$("fab").innerHTML=ic("plus",24);theme();show();render();
 if(new URLSearchParams(location.search).get("hata")){toast("GitHub girişi tamamlanamadı, tekrar dene");history.replaceState(null,"","/")}
 loadGH().then(()=>{if(!S.name&&!S.skip){S.skip=true;save();askName()}});
 </script>
