@@ -36,7 +36,46 @@ module.exports = async (req, res) => {
     return send(res, 200, { ok: true });
   }
 
+  if (b.mode === "blob") {
+    if (typeof b.content !== "string") return send(res, 400, { error: "Geçersiz dosya" });
+    const r = await gh(t, `/repos/${owner}/${repo}/git/blobs`, { method: "POST", body: JSON.stringify({ content: b.content, encoding: "base64" }) });
+    if (!r.ok) return send(res, 502, { error: (r.data && r.data.message) || "Yüklenemedi" });
+    return send(res, 200, { ok: true, sha: r.data.sha });
+  }
+
+  if (b.mode === "commit") {
+    const files = Array.isArray(b.files) ? b.files : [];
+    if (!files.length || files.length > 500) return send(res, 400, { error: "Dosya listesi geçersiz" });
+    for (const f of files) {
+      if (!f || typeof f.path !== "string" || !f.path || f.path.includes("..") || f.path.startsWith("/") || !/^[0-9a-f]{40}$/.test(f.sha || ""))
+        return send(res, 400, { error: "Geçersiz dosya yolu" });
+    }
+    const g = await gh(t, `/repos/${owner}/${repo}`);
+    if (!g.ok) return send(res, 502, { error: "Repo okunamadı" });
+    const br = g.data.default_branch;
+    const ref = await gh(t, `/repos/${owner}/${repo}/git/ref/heads/${br}`);
+    if (!ref.ok) return send(res, 502, { error: "Dal okunamadı" });
+    const parent = ref.data.object.sha;
+    const pc = await gh(t, `/repos/${owner}/${repo}/git/commits/${parent}`);
+    if (!pc.ok) return send(res, 502, { error: "Commit okunamadı" });
+    const tree = await gh(t, `/repos/${owner}/${repo}/git/trees`, {
+      method: "POST",
+      body: JSON.stringify({ base_tree: pc.data.tree.sha, tree: files.map((f) => ({ path: f.path, mode: "100644", type: "blob", sha: f.sha })) }),
+    });
+    if (!tree.ok) return send(res, 502, { error: (tree.data && tree.data.message) || "Dosya ağacı oluşturulamadı" });
+    const cm = await gh(t, `/repos/${owner}/${repo}/git/commits`, {
+      method: "POST",
+      body: JSON.stringify({ message: String(b.message || "BuildLog ile yüklendi").slice(0, 200), tree: tree.data.sha, parents: [parent] }),
+    });
+    if (!cm.ok) return send(res, 502, { error: (cm.data && cm.data.message) || "Commit oluşturulamadı" });
+    const up = await gh(t, `/repos/${owner}/${repo}/git/refs/heads/${br}`, { method: "PATCH", body: JSON.stringify({ sha: cm.data.sha }) });
+    if (!up.ok) return send(res, 502, { error: (up.data && up.data.message) || "Dal güncellenemedi" });
+    return send(res, 200, { ok: true });
+  }
+
   if (b.mode === "publish") {
+    const dp = await gh(t, `/repos/${owner}/${repo}/deployments?per_page=1`);
+    if (dp.ok && Array.isArray(dp.data) && dp.data[0]) return send(res, 200, { ok: true, url: "", vercel: true });
     const g = await gh(t, `/repos/${owner}/${repo}`);
     const br = g.ok ? g.data.default_branch : "main";
     await gh(t, `/repos/${owner}/${repo}/pages`, { method: "POST", body: JSON.stringify({ source: { branch: br, path: "/" } }) });
