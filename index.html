@@ -16,6 +16,8 @@
 :root{--bg:#F3F5FB;--p:#fff;--p2:#F3F5FB;--ln:#DFE4F1;--ink:#141A33;--mu:#5E6891;--ac:#4F5CF0;--ac2:#E5E8FF;--on:#fff;--ok:#16A34A;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A0F20;--p:#0F1630;--p2:#151D3C;--ln:#212A4B;--ink:#E8ECF9;--mu:#8D98BD;--ac:#6B77FF;--ac2:#1D2552;--ok:#34D399;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#0A0F20;--p:#0F1630;--p2:#151D3C;--ln:#212A4B;--ink:#E8ECF9;--mu:#8D98BD;--ac:#6B77FF;--ac2:#1D2552;--ok:#34D399;color-scheme:dark}
+:root[data-theme="red"]{--bg:#16090C;--p:#211015;--p2:#2B151B;--ln:#43202A;--ink:#FBEAEA;--mu:#C79A9F;--ac:#F0505A;--ac2:#3D1820;--on:#fff;--ok:#34D399;color-scheme:dark}
+:root[data-theme="red"] .quote{background:linear-gradient(135deg,#B3202B,#4A0D14)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -232,7 +234,7 @@ async function loadGH(){try{const r=await fetch("/api/repos");if(!r.ok)throw 0;G
 function askName(){form("Adın ne?",[{k:"n",l:"Sana nasıl hitap edelim?"}],v=>{S.name=v.n;save()},"Kaydet");$("f_n").value=S.name||""}
 const match=s=>!qs||s.toLowerCase().includes(qs);
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)}
-function theme(){document.documentElement.setAttribute("data-theme",S.theme)}
+function theme(){document.documentElement.setAttribute("data-theme",S.theme);const m=document.querySelector('meta[name="theme-color"]');if(m)m.content={dark:"#0A0F20",light:"#F3F5FB",red:"#16090C"}[S.theme]||"#0A0F20"}
 function nav(){const h=(c)=>NAV.map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[1]}</span></button>`).join("");
  $("snav").innerHTML=h();$("bnav").innerHTML=NAV.slice(0,5).map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[0]==="log"?"Günlük":n[1]}</span></button>`).join("")}
 function show(){document.querySelectorAll("[data-v]").forEach(e=>{if(e.dataset.a)return;e.hidden=!e.dataset.v.split(" ").includes(view)});$("cols").classList.toggle("one",view!=="dash");$("pt").textContent=view==="projects"?"Tüm Projeler":"Aktif Projeler";nav()}
@@ -242,14 +244,14 @@ function render(){
  const P=S.projects.filter(p=>!p.arch),act=P.filter(p=>p.pct<100);
  const AX=S.projects.filter(p=>p.arch&&match(p.name+p.desc));$("arch").innerHTML=AX.map(card).join("");$("archw").hidden=!(view==="projects"&&AX.length);
  const AR=actRepos();$("smart").innerHTML=view==="dash"&&AR.length?`<div class="card live" style="margin:0 0 16px"><span>${AR.length} aktif repo bulundu</span><span><button class="pri" data-a="impall">Hepsini ekle</button> <button class="ib" data-a="dis" aria-label="Önerileri kapat">×</button></span></div>`:"";
- $("stats").innerHTML=[["folder","Toplam Proje",P.length],["bulb","Fikir",S.ideas.length],["code","Aktif Geliştirme",act.length],["check","Tamamlanan",P.filter(p=>p.pct===100).length]].map(s=>`<div class="card stat"><div class="ico">${ic(s[0])}</div><small>${s[1]}</small><b>${s[2]}</b></div>`).join("");
+ $("stats").innerHTML=[["folder","Toplam Proje",S.projects.length],["bulb","Fikir",S.ideas.length],["code","Aktif Geliştirme",act.length],["check","Tamamlanan",P.filter(p=>p.pct===100).length]].map(s=>`<div class="card stat"><div class="ico">${ic(s[0])}</div><small>${s[1]}</small><b>${s[2]}</b></div>`).join("");
  const L=(view==="projects"?P:P.filter(p=>p.pct<100)).filter(p=>match(p.name+p.desc+p.tags.join(" ")));
  $("projs").innerHTML=L.length?L.map(card).join(""):`<p class="empty">${P.length?"Eşleşen proje yok.":"Henüz proje yok. “Yeni Proje” ile ilkini ekle."}</p>`;
  const ID=S.ideas.filter(i=>match(i.t+i.d));
  $("ideas").innerHTML=ID.length?ID.map(i=>`<li><div class="li">${ic(i.i)}</div><div class="t"><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><span class="chip">${esc(i.tag)}</span><span class="d">${ago(i.at)}</span></li>`).join(""):`<li class="empty" style="display:block">Henüz fikir yok.</li>`;
  $("acts").innerHTML=!S.acts.length?`<li class="empty" style="display:block">Henüz aktivite yok.</li>`:S.acts.slice(0,view==="log"?50:6).map(a=>`<li><div class="li">${ic(a.i)}</div><div class="t"><b>${esc(a.t)}</b><small>${ago(a.at)}</small></div></li>`).join("");
- const cnt=TYPES.map(t=>P.filter(p=>p.type===t).length);let acc=0;const n=P.length||1;const g=P.length?cnt.map((c,i)=>{const s=acc/n*100;acc+=c;return `${COL[i]} ${s}% ${acc/n*100}%`}).join(","):"var(--ln) 0 100%";
- $("dn").innerHTML=`<div class="ring" style="background:conic-gradient(${g})"><div><span><b>${P.length}</b><br>Proje</span></div></div><div class="lg">${TYPES.map((t,i)=>`<div><i style="background:${COL[i]}"></i>${t}<b>${cnt[i]}</b></div>`).join("")}</div>`;
+ const AL=S.projects;const cnt=TYPES.map(t=>AL.filter(p=>p.type===t).length);let acc=0;const n=AL.length||1;const g=AL.length?cnt.map((c,i)=>{const s=acc/n*100;acc+=c;return `${COL[i]} ${s}% ${acc/n*100}%`}).join(","):"var(--ln) 0 100%";
+ $("dn").innerHTML=`<div class="ring" style="background:conic-gradient(${g})"><div><span><b>${AL.length}</b><br>Proje</span></div></div><div class="lg">${TYPES.map((t,i)=>`<div><i style="background:${COL[i]}"></i>${t}<b>${cnt[i]}</b></div>`).join("")}</div>`;
  $("ghs").textContent=S.gh?"Bağlı: @"+(G?G.user.login:""):"Bağlı değil";const nm=S.name;$("hi").textContent=nm?"👋 Tekrar hoş geldin, "+nm+"!":"👋 Hoş geldin!";$("mi").textContent=nm?nm[0].toUpperCase():"?";$("mn").textContent=nm||"Adını ekle";$("ghb").textContent=S.gh?"Bağlantıyı kes":"GitHub’a bağlan";
  $("repos").innerHTML=G?G.repos.filter(r=>!r.fork&&!r.archived&&r.name!=="buildlog-data").map(r=>{const imp=S.projects.some(p=>p.repo===r.full);const ac=Date.now()-new Date(r.pushed)<2592e6;return `<li><div class="li">${ic("gh",18)}</div><div class="t"><b>${esc(r.name)}</b><small>${ac?"Aktif":"Durağan"}: ${ago(r.pushed)}${r.lang?" – "+esc(r.lang):""}</small></div>${imp?`<span class="chip">Ekli</span>`:`<button class="ghost" data-a="imp" data-r="${esc(r.full)}">İçe aktar</button>`}</li>`}).join(""):"";
 }
@@ -296,7 +298,7 @@ async function doPush(p){
 function sheet(id,tab){const p=find(id);if(!p)return;TAB=tab||(id===CP?TAB:"gen");CP=id;FL=[];
  const tk=p.tasks||[];if(tk.length)p.pct=Math.round(tk.filter(x=>x.d).length/tk.length*100);
  let b="";
- if(TAB==="gen")b=`<label>Notlar<textarea id="nt" rows="3" placeholder="Bu projede ne yapıyorsun?">${esc(p.note||"")}</textarea></label>
+ if(TAB==="gen")b=`<label>Tür<select id="ty">${TYPES.map(x=>`<option${x===p.type?" selected":""}>${x}</option>`).join("")}</select></label><label>Notlar<textarea id="nt" rows="3" placeholder="Bu projede ne yapıyorsun?">${esc(p.note||"")}</textarea></label>
 <h4>Görevler ${tk.length?`<small>${tk.filter(x=>x.d).length}/${tk.length}</small>`:""}</h4>
 <ul class="list">${tk.map((x,k)=>`<li><button class="ck ${x.d?"on":""}" data-a="tk" data-i="${k}" aria-label="Tamamla"></button><span class="t" style="${x.d?"text-decoration:line-through;color:var(--mu)":""}">${esc(x.t)}</span><button class="ib" data-a="tkx" data-i="${k}" aria-label="Sil">×</button></li>`).join("")}</ul>
 <div class="add"><input id="nk" placeholder="Yeni görev…"><button class="pri" data-a="tka">Ekle</button></div>
@@ -309,6 +311,7 @@ ${tk.length?"":`<label>İlerleme: <b id="pv">%${p.pct}</b><input type="range" id
 <div class="tabs">${[["gen","Genel"],["gh","GitHub"],["up","Yükle"]].map(x=>`<button class="${TAB===x[0]?"on":""}" data-a="tab" data-t="${x[0]}">${x[1]}</button>`).join("")}</div>${b}
 <div class="row2"><button class="ghost" data-a="arc">${p.arch?"Arşivden çıkar":"Arşivle"}</button><button class="ghost" data-a="del">Sil</button><button class="ghost" data-a="close">Kapat</button></div>`);
  const nt=$("nt");if(nt)nt.oninput=()=>{p.note=nt.value;save()};
+ const ty=$("ty");if(ty)ty.onchange=()=>{const o=p.type;p.type=ty.value;const k=p.tags.indexOf(o);if(k>=0)p.tags[k]=p.type;save();render()};
  const rg=$("rg");if(rg)rg.oninput=e=>{p.pct=+e.target.value;p.at=Date.now();$("pv").textContent="%"+p.pct;save();render()};
  if($("fl")){$("fl").onchange=pickF;$("fd").onchange=pickF}
  if($("pushb"))$("pushb").onclick=()=>doPush(p);
@@ -328,7 +331,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-a]");if(!t
  else if(a==="arc"){const p=find(CP);p.arch=!p.arch;save();close();render();toast(p.arch?"Arşivlendi":"Arşivden çıkarıldı")}
  else if(a==="del"){if(confirm("Panelden silinsin mi? GitHub reposu silinmez.")){S.projects=S.projects.filter(x=>x.id!==CP);save();close();render()}}
  else if(a==="dis"){S.hidden=[...(S.hidden||[]),...actRepos().map(r=>r.full)];save();render()}
- else if(a==="theme"){S.theme=S.theme==="dark"?"light":"dark";theme();save()}
+ else if(a==="theme"){const T=["dark","light","red"],N={dark:"Koyu",light:"Aydınlık",red:"Kırmızı"};S.theme=T[(T.indexOf(S.theme)+1)%3];theme();save();toast("Tema: "+N[S.theme])}
  else if(a==="name")askName();
  else if(a==="gh"){location.href=G?"/api/logout":"/api/login"}
  else if(a==="imp"){imp(t.dataset.r);save();render()}
