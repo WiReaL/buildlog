@@ -230,7 +230,7 @@ function imp(full){const r=G&&G.repos.find(x=>x.full===full);if(!r||S.projects.s
  S.acts.unshift({i:"gh",t:r.name+" GitHub’dan eklendi",w:"Şimdi"})}
 function syncProjects(){S.projects.forEach(p=>{const r=p.repo&&G.repos.find(x=>x.full===p.repo);if(r){p.at=new Date(r.pushed).getTime();if(r.home&&!p.url)p.url=r.home}})}
 async function loadGH(){try{const r=await fetch("/api/repos");if(!r.ok)throw 0;G=await r.json();S.gh=true}catch(e){G=null;S.gh=false;render();return}
- await cloudSync();if(!S.name)S.name=G.user.name||G.user.login;syncProjects();store();render()}
+ await cloudSync();if(!S.name)S.name=G.user.name||G.user.login;syncProjects();store();render();refreshAll()}
 function askName(){form("Adın ne?",[{k:"n",l:"Sana nasıl hitap edelim?"}],v=>{S.name=v.n;save()},"Kaydet");$("f_n").value=S.name||""}
 const match=s=>!qs||s.toLowerCase().includes(qs);
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)}
@@ -264,10 +264,15 @@ let CP=null,TAB="gen",PD={};
 const pickF=e=>{FL=[...e.target.files];$("fls").textContent=FL.slice(0,6).map(f=>f.name).join(", ")+(FL.length>6?" +"+(FL.length-6)+" dosya":"")};
 const ghView=d=>d.error?`<p class="sub">Veri alınamadı: ${esc(d.error)}</p>`:`<p class="sub">⭐ ${d.info.stars}, dal: ${esc(d.info.branch)}, <a href="${esc(d.info.url)}" target="_blank" rel="noopener">GitHub’da aç</a>, <a href="#" data-a="rf">yenile</a></p>
 <h4>Yayın durumu</h4>${d.deploy?`<div class="live"><span>${esc(d.deploy.state)} (${esc(d.deploy.env)})</span>${d.deploy.url?`<a href="${esc(d.deploy.url)}" target="_blank" rel="noopener">Aç</a>`:""}</div>`:`<p class="sub">Henüz dağıtım kaydı yok.</p>`}
+<h4>Milestone’lar</h4>${d.milestones.map(m=>`<div class="bar" style="margin:8px 0"><span style="min-width:90px">${esc(m.title)}</span><div class="pbar"><i style="width:${m.open+m.closed?Math.round(m.closed/(m.open+m.closed)*100):0}%"></i></div><span>${m.closed}/${m.open+m.closed}</span></div>`).join("")||`<p class="sub">Açık milestone yok.${d.progress?" İlerleme issue’lardan hesaplanır.":""}</p>`}
+<div class="add"><input id="nms" placeholder="Yeni milestone (ör. v1.0)"><button class="pri" data-a="msa">Ekle</button></div>
 <h4>Açık issue’lar</h4><ul class="list">${d.issues.map(i=>`<li><div class="t"><b>#${i.n} ${esc(i.title)}</b></div><button class="ghost" data-a="cls" data-n="${i.n}">Kapat</button></li>`).join("")||`<li class="sub">Açık issue yok.</li>`}</ul>
-<div class="add"><input id="ni" placeholder="Yeni issue başlığı…"><button class="pri" data-a="isa">Ekle</button></div>
+<div class="add"><input id="ni" placeholder="Yeni issue başlığı…"><select id="nm" style="width:auto;max-width:38%;margin-top:0"><option value="">Milestone yok</option>${d.milestones.map(m=>`<option value="${m.n}">${esc(m.title)}</option>`).join("")}</select><button class="pri" data-a="isa">Ekle</button></div>
 <h4>Son commit’ler</h4><ul class="list">${d.commits.map(c=>`<li><div class="t"><b>${esc(c.msg)}</b><small>${esc(c.who)}, ${ago(c.date)}</small></div></li>`).join("")}</ul>`;
-async function loadRepo(p){PD[p.id]={loading:1};try{const r=await fetch("/api/repo?r="+encodeURIComponent(p.repo));const d=await r.json();PD[p.id]=r.ok?d:{error:d.error||"hata"};if(r.ok&&d.deploy&&d.deploy.url&&d.deploy.env==="Production"&&!p.url){p.url=d.deploy.url;save();render()}}catch(e){PD[p.id]={error:"bağlantı"}}if(CP===p.id&&TAB==="gh"&&!$("ov").hidden)sheet(p.id)}
+function applyProg(p,g){const o=p.pct+"|"+p.src;if(g&&g.total){p.pct=Math.round(g.done/g.total*100);p.src=g.src==="milestone"?`Milestone “${g.name}”: ${g.done}/${g.total} kapalı`:`Issue’lar: ${g.done}/${g.total} kapalı`}else p.src="";return o!==p.pct+"|"+p.src}
+async function refreshProg(p){try{const r=await fetch("/api/repo?k=prog&r="+encodeURIComponent(p.repo));if(!r.ok)return false;const d=await r.json();return applyProg(p,d.progress)}catch(e){return false}}
+async function refreshAll(){const L=S.projects.filter(p=>p.auto&&p.repo);if(!L.length)return;const R=await Promise.all(L.map(refreshProg));if(R.some(Boolean))save();render()}
+async function loadRepo(p){PD[p.id]={loading:1};try{const r=await fetch("/api/repo?r="+encodeURIComponent(p.repo));const d=await r.json();PD[p.id]=r.ok?d:{error:d.error||"hata"};if(r.ok&&p.auto&&applyProg(p,d.progress)){save();render()}if(r.ok&&d.deploy&&d.deploy.url&&d.deploy.env==="Production"&&!p.url){p.url=d.deploy.url;save();render()}}catch(e){PD[p.id]={error:"bağlantı"}}if(CP===p.id&&TAB==="gh"&&!$("ov").hidden)sheet(p.id)}
 async function ghAct(b){const p=find(CP);try{const r=await fetch("/api/repo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({r:p.repo,...b})});const j=await r.json().catch(()=>({}));toast(r.ok?"Tamam":(j.error||"Hata"))}catch(e){toast("Bağlantı hatası")}PD[p.id]=null;sheet(p.id,"gh")}
 async function doPush(p){
  if(!G){toast("Önce GitHub’a bağlan");return}
@@ -296,13 +301,14 @@ async function doPush(p){
  if($("pushb"))$("pushb").disabled=false;FL=[];
 }
 function sheet(id,tab){const p=find(id);if(!p)return;TAB=tab||(id===CP?TAB:"gen");CP=id;FL=[];
- const tk=p.tasks||[];if(tk.length)p.pct=Math.round(tk.filter(x=>x.d).length/tk.length*100);
+ const tk=p.tasks||[];if(tk.length&&!(p.auto&&p.src))p.pct=Math.round(tk.filter(x=>x.d).length/tk.length*100);
  let b="";
  if(TAB==="gen")b=`<label>Tür<select id="ty">${TYPES.map(x=>`<option${x===p.type?" selected":""}>${x}</option>`).join("")}</select></label><label>Notlar<textarea id="nt" rows="3" placeholder="Bu projede ne yapıyorsun?">${esc(p.note||"")}</textarea></label>
 <h4>Görevler ${tk.length?`<small>${tk.filter(x=>x.d).length}/${tk.length}</small>`:""}</h4>
 <ul class="list">${tk.map((x,k)=>`<li><button class="ck ${x.d?"on":""}" data-a="tk" data-i="${k}" aria-label="Tamamla"></button><span class="t" style="${x.d?"text-decoration:line-through;color:var(--mu)":""}">${esc(x.t)}</span><button class="ib" data-a="tkx" data-i="${k}" aria-label="Sil">×</button></li>`).join("")}</ul>
 <div class="add"><input id="nk" placeholder="Yeni görev…"><button class="pri" data-a="tka">Ekle</button></div>
-${tk.length?"":`<label>İlerleme: <b id="pv">%${p.pct}</b><input type="range" id="rg" min="0" max="100" step="5" value="${p.pct}"></label>`}
+${(tk.length||(p.auto&&p.src))?"":`<label>İlerleme: <b id="pv">%${p.pct}</b><input type="range" id="rg" min="0" max="100" step="5" value="${p.pct}"></label>`}
+${p.repo?`<label style="display:flex;gap:10px;align-items:center;margin-top:16px"><input type="checkbox" id="au" ${p.auto?"checked":""} style="width:auto;display:inline-block;margin:0"> İlerlemeyi GitHub’dan hesapla</label><p class="sub" style="margin:4px 0 0">${p.auto?(p.src?esc(p.src):"Henüz milestone ya da issue yok, ilerlemeyi elle ayarlayabilirsin."):"Milestone varsa onu, yoksa issue’ları baz alır."}</p>`:""}
 <h4>Canlı bağlantı</h4>${live(p)}`;
  else if(TAB==="gh")b=!p.repo?`<p class="sub" style="margin-top:14px">Bu proje henüz bir GitHub reposuna bağlı değil. “Yükle” sekmesinden dosya gönderince repo oluşur.</p>`:!G?`<p class="sub" style="margin-top:14px">Verileri görmek için GitHub’a bağlan.</p>`:(PD[p.id]&&!PD[p.id].loading?ghView(PD[p.id]):`<p class="sub" style="margin-top:14px">Yükleniyor…</p>`);
  else b=`<label class="drop">Dosyaları seç<input type="file" id="fl" multiple hidden></label><label class="drop" style="margin-top:8px">Klasör seç (bilgisayarda)<input type="file" id="fd" webkitdirectory hidden></label><div id="fls" class="sub" style="margin:8px 0 0"></div><button class="pri wide" id="pushb">${ic("gh",18)} GitHub’a gönder</button><div id="lg"></div>${live(p)}`;
@@ -313,6 +319,7 @@ ${tk.length?"":`<label>İlerleme: <b id="pv">%${p.pct}</b><input type="range" id
  const nt=$("nt");if(nt)nt.oninput=()=>{p.note=nt.value;save()};
  const ty=$("ty");if(ty)ty.onchange=()=>{const o=p.type;p.type=ty.value;const k=p.tags.indexOf(o);if(k>=0)p.tags[k]=p.type;save();render()};
  const rg=$("rg");if(rg)rg.oninput=e=>{p.pct=+e.target.value;p.at=Date.now();$("pv").textContent="%"+p.pct;save();render()};
+ const au=$("au");if(au)au.onchange=async()=>{p.auto=au.checked;if(p.auto)await refreshProg(p);save();render();sheet(p.id)};
  if($("fl")){$("fl").onchange=pickF;$("fd").onchange=pickF}
  if($("pushb"))$("pushb").onclick=()=>doPush(p);
  if(TAB==="gh"&&p.repo&&G&&!PD[p.id])loadRepo(p);
@@ -325,8 +332,9 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-a]");if(!t
  else if(a==="tk"){const p=find(CP),x=p.tasks[+t.dataset.i];x.d=!x.d;p.at=Date.now();save();render();sheet(CP,"gen")}
  else if(a==="tkx"){const p=find(CP);p.tasks.splice(+t.dataset.i,1);save();render();sheet(CP,"gen")}
  else if(a==="tka"){const v=$("nk").value.trim();if(!v)return;const p=find(CP);(p.tasks=p.tasks||[]).push({t:v,d:false});save();render();sheet(CP,"gen")}
- else if(a==="isa"){const v=$("ni").value.trim();if(v)ghAct({mode:"issue",title:v})}
+ else if(a==="isa"){const v=$("ni").value.trim();if(v)ghAct({mode:"issue",title:v,milestone:+($("nm")&&$("nm").value)||0})}
  else if(a==="cls")ghAct({mode:"close",n:+t.dataset.n})
+ else if(a==="msa"){const v=$("nms").value.trim();if(v)ghAct({mode:"milestone",title:v})}
  else if(a==="rf"){e.preventDefault();PD[CP]=null;sheet(CP,"gh")}
  else if(a==="arc"){const p=find(CP);p.arch=!p.arch;save();close();render();toast(p.arch?"Arşivlendi":"Arşivden çıkarıldı")}
  else if(a==="del"){if(confirm("Panelden silinsin mi? GitHub reposu silinmez.")){S.projects=S.projects.filter(x=>x.id!==CP);save();close();render()}}
