@@ -130,6 +130,13 @@ main{padding:16px 14px 100px;min-width:0}
 .ck{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--ln);background:none}.ck.on{background:var(--ac);border-color:var(--ac)}
 .tabs{display:flex;gap:6px;margin:14px 0 4px;border-bottom:1px solid var(--ln)}.tabs button{background:none;border:0;padding:9px 14px;color:var(--mu);border-bottom:2px solid transparent;font-weight:700}.tabs button.on{color:var(--ac);border-color:var(--ac)}
 .row2{display:flex;gap:8px;margin-top:20px}.row2 button{flex:1}.sh a{color:var(--ac)}
+.card{box-shadow:0 8px 24px -14px rgba(0,0,0,.45);transition:border-color .2s,transform .2s}
+.pc:hover{border-color:var(--ac);transform:translateY(-2px)}
+.top{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:color-mix(in srgb,var(--bg) 82%,transparent)}
+.pri{box-shadow:0 6px 16px -8px var(--ac);transition:transform .15s}.pri:active{transform:scale(.97)}
+.pbar{height:8px}.pbar i{background:linear-gradient(90deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#fff))}
+.av{font-size:1.25rem}
+@media (prefers-reduced-motion:reduce){.pc:hover{transform:none}}
 .fab{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:25;width:52px;height:52px;border-radius:16px;border:0;background:var(--ac);color:var(--on);display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
 @media (max-width:639px){
  .hero p,.hero .pri,.dm{display:none}
@@ -151,13 +158,13 @@ main{padding:16px 14px 100px;min-width:0}
 <body>
 <div class="app">
  <aside class="side">
-  <div class="logo"><i>&lt;/&gt;</i><div>BuildLog<small>Fikirlerin. Gerçek projeler.</small></div></div>
+  <div class="logo"><i class="bi">&lt;/&gt;</i><div><span class="bn">BuildLog</span><small>Fikirlerin. Gerçek projeler.</small></div></div>
   <nav id="snav"></nav>
   <button class="pri" data-a="newp" style="margin-top:auto">+ Yeni Proje</button>
  </aside>
  <div style="min-width:0">
   <header class="top">
-   <div class="logo"><i>&lt;/&gt;</i>BuildLog</div>
+   <div class="logo"><i class="bi">&lt;/&gt;</i><span class="bn">BuildLog</span></div>
    <label class="search"><span id="si"></span><input id="q" placeholder="Projelerde, fikirlerde ara…" aria-label="Ara"></label>
    <button class="ib" data-a="theme" aria-label="Tema değiştir" id="ti"></button>
    <button class="ib" aria-label="Bildirimler" id="bi"></button>
@@ -203,7 +210,7 @@ try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catc
 S.gh=false;
 let tm=null,cloudOK=false;
 const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-const snap=()=>({v:1,ts:S.ts||0,name:S.name,theme:S.theme,projects:S.projects,ideas:S.ideas,acts:S.acts,hidden:S.hidden||[]});
+const snap=()=>({v:1,ts:S.ts||0,name:S.name,theme:S.theme,projects:S.projects,ideas:S.ideas,acts:S.acts,hidden:S.hidden||[],appName:S.appName||"",appIcon:S.appIcon||""});
 const save=()=>{S.ts=Date.now();store();if(cloudOK){clearTimeout(tm);tm=setTimeout(push,1500)}};
 function setSync(st){const e=$("sync");if(e)e.textContent=st==="ok"?"Veriler GitHub’da yedekte (özel repo: buildlog-data).":st==="err"?"Veriler buluta kaydedilemedi, bir sonraki değişiklikte tekrar denenecek.":""}
 async function push(){try{const r=await fetch("/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:snap()})});setSync(r.ok?"ok":"err")}catch(e){setSync("err")}}
@@ -213,7 +220,7 @@ function merge(d){const ids=new Set((d.projects||[]).map(p=>p.id));const it=new 
 async function cloudSync(){try{const r=await fetch("/api/data");if(!r.ok)throw 0;const j=await r.json();const d=j.data;cloudOK=true;
  const has=S.projects.length||S.ideas.length||S.acts.length||S.name;
  if(d&&!S.synced){merge(d);S.synced=true;S.ts=Date.now();store();theme();await push();toast("Veriler eşitlendi")}
- else if(d&&(d.ts||0)>(S.ts||0)){S.name=d.name||S.name;S.theme=d.theme||S.theme;S.projects=d.projects||[];S.ideas=d.ideas||[];S.acts=d.acts||[];S.hidden=d.hidden||[];S.ts=d.ts;S.synced=true;store();theme();setSync("ok");toast("Veriler eşitlendi")}
+ else if(d&&(d.ts||0)>(S.ts||0)){S.name=d.name||S.name;S.theme=d.theme||S.theme;S.projects=d.projects||[];S.ideas=d.ideas||[];S.acts=d.acts||[];S.hidden=d.hidden||[];S.appName=d.appName||"";S.appIcon=d.appIcon||"";S.ts=d.ts;S.synced=true;store();theme();setSync("ok");toast("Veriler eşitlendi")}
  else if((!d&&has)||(d&&(S.ts||0)>(d.ts||0))){S.synced=true;store();await push()}
  else{S.synced=true;store();setSync("ok")}
 }catch(e){cloudOK=false;setSync("err")}}
@@ -231,15 +238,15 @@ function imp(full){const r=G&&G.repos.find(x=>x.full===full);if(!r||S.projects.s
 function syncProjects(){S.projects.forEach(p=>{const r=p.repo&&G.repos.find(x=>x.full===p.repo);if(r){p.at=new Date(r.pushed).getTime();if(r.home&&!p.url)p.url=r.home}})}
 async function loadGH(){try{const r=await fetch("/api/repos");if(!r.ok)throw 0;G=await r.json();S.gh=true}catch(e){G=null;S.gh=false;render();return}
  await cloudSync();if(!S.name)S.name=G.user.name||G.user.login;syncProjects();store();render();refreshAll()}
-function askName(){form("Adın ne?",[{k:"n",l:"Sana nasıl hitap edelim?"}],v=>{S.name=v.n;save()},"Kaydet");$("f_n").value=S.name||""}
+function askName(){form("Ayarlar",[{k:"n",l:"Adın"},{k:"an",l:"Uygulama adı"},{k:"ai",l:"Uygulama ikonu (bir emoji, boş bırakırsan varsayılan)"}],v=>{S.name=v.n;S.appName=v.an;S.appIcon=v.ai.slice(0,4);save()},"Kaydet");$("f_n").value=S.name||"";$("f_an").value=S.appName||"";$("f_ai").value=S.appIcon||""}
 const match=s=>!qs||s.toLowerCase().includes(qs);
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)}
 function theme(){document.documentElement.setAttribute("data-theme",S.theme);const m=document.querySelector('meta[name="theme-color"]');if(m)m.content={dark:"#0A0F20",light:"#F3F5FB",red:"#16090C"}[S.theme]||"#0A0F20"}
 function nav(){const h=(c)=>NAV.map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[1]}</span></button>`).join("");
  $("snav").innerHTML=h();$("bnav").innerHTML=NAV.slice(0,5).map(n=>`<button class="${view===n[0]?"on":""}" data-a="goto" data-v="${n[0]}">${ic(n[2])}<span>${n[0]==="log"?"Günlük":n[1]}</span></button>`).join("")}
 function show(){document.querySelectorAll("[data-v]").forEach(e=>{if(e.dataset.a)return;e.hidden=!e.dataset.v.split(" ").includes(view)});$("cols").classList.toggle("one",view!=="dash");$("pt").textContent=view==="projects"?"Tüm Projeler":"Aktif Projeler";nav()}
-function card(p){const h=HUE[S.projects.indexOf(p)%6];return `<article class="card pc" data-a="proj" data-id="${p.id}" tabindex="0"><div class="ph"><div class="av" style="--h:${h}">${esc(p.name[0])}</div><div><b>${esc(p.name)}</b><p>${esc(p.desc)}</p></div></div><div class="bar"><div class="pbar"><i style="width:${p.pct}%"></i></div><span>%${p.pct}</span></div><div class="tags">${p.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div><div class="pf"><small>Son güncelleme: ${ago(p.at)}</small><span class="gh ${p.url?"on":""}" title="${p.url?"Canlı":"Henüz yayında değil"}">${ic("gh")}</span></div></article>`}
-function render(){
+function card(p){const h=p.hue!=null?p.hue:HUE[S.projects.indexOf(p)%6];return `<article class="card pc" data-a="proj" data-id="${p.id}" tabindex="0"><div class="ph"><div class="av" style="--h:${h}">${esc(p.icon||p.name[0])}</div><div><b>${esc(p.name)}</b><p>${esc(p.desc)}</p></div></div><div class="bar"><div class="pbar"><i style="width:${p.pct}%"></i></div><span>%${p.pct}</span></div><div class="tags">${p.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div><div class="pf"><small>Son güncelleme: ${ago(p.at)}</small><span class="gh ${p.url?"on":""}" title="${p.url?"Canlı":"Henüz yayında değil"}">${ic("gh")}</span></div></article>`}
+function render(){brand();
  S.acts.forEach(a=>{a.at=a.at||S.ts||Date.now()});S.ideas.forEach(i=>{i.at=i.at||S.ts||Date.now()});S.projects.forEach(p=>{p.at=p.at||S.ts||Date.now()});
  const P=S.projects.filter(p=>!p.arch),act=P.filter(p=>p.pct<100);
  const AX=S.projects.filter(p=>p.arch&&match(p.name+p.desc));$("arch").innerHTML=AX.map(card).join("");$("archw").hidden=!(view==="projects"&&AX.length);
@@ -260,7 +267,17 @@ function close(){$("ov").hidden=true;$("ov").innerHTML=""}
 function form(title,fs,ok,btn){ov(`<h3>${title}</h3>${fs.map(f=>`<label>${f.l}${f.t==="area"?`<textarea id="f_${f.k}" rows="4"></textarea>`:f.t==="sel"?`<select id="f_${f.k}">${f.o.map(o=>`<option>${o}</option>`).join("")}</select>`:`<input id="f_${f.k}">`}</label>`).join("")}<button class="pri wide" id="okb">${btn}</button>`);
  $("okb").onclick=()=>{const v={};fs.forEach(f=>v[f.k]=$("f_"+f.k).value.trim());if(!v[fs[0].k]){toast("İlk alanı boş bırakma");return}ok(v);close();render()}}
 function live(p){return p.url?`<div class="live" id="lv"><code>${esc(p.url)}</code><button class="ghost" data-a="copy" data-id="${p.id}">Kopyala</button></div>`:`<p class="sub" id="lv" style="margin-top:12px">Dosyaları gönderince canlı bağlantı burada görünecek.</p>`}
-let CP=null,TAB="gen",PD={};
+let CP=null,TAB="gen",PD={},FS={};
+const CN=["Mor","Yeşil","Pembe","Turuncu","Mavi","Sarı"];
+function brand(){document.querySelectorAll(".bn").forEach(e=>e.textContent=S.appName||"BuildLog");document.querySelectorAll(".bi").forEach(e=>e.textContent=S.appIcon||"</>");document.title=S.appName||"BuildLog"}
+async function loadDir(p,path){FS[p.id]={path,loading:1};sheet(p.id,"fi");try{const r=await fetch("/api/files?r="+encodeURIComponent(p.repo)+"&path="+encodeURIComponent(path));const d=await r.json();FS[p.id]=r.ok?{path,...d}:{path,error:d.error||"hata"}}catch(e){FS[p.id]={path,error:"bağlantı"}}if(CP===p.id&&TAB==="fi"&&!$("ov").hidden)sheet(p.id,"fi")}
+async function fsave(p,path,text){try{const r=await fetch("/api/files",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({r:p.repo,path,text})});const j=await r.json().catch(()=>({}));toast(r.ok?"Kaydedildi (tek commit)":(j.error||"Hata"));if(r.ok){p.at=Date.now();S.acts.unshift({i:"code",t:p.name+": "+path+" düzenlendi"});save();render();PD[p.id]=null}}catch(e){toast("Bağlantı hatası")}}
+function filesView(p){const f=FS[p.id];if(!f||f.loading)return `<p class="sub" style="margin-top:14px">Yükleniyor…</p>`;
+ const crumb=`<p class="sub" style="margin:14px 0 8px"><a href="#" data-a="fd" data-p="">${esc(p.repo.split("/")[1])}</a>${f.path?" / "+f.path.split("/").map((x,i,a)=>`<a href="#" data-a="fd" data-p="${esc(a.slice(0,i+1).join("/"))}">${esc(x)}</a>`).join(" / "):""}</p>`;
+ if(f.error)return crumb+`<p class="sub">Okunamadı: ${esc(f.error)}</p>`;
+ if(f.type==="dir")return crumb+`<ul class="list">${f.items.map(x=>`<li><div class="li">${ic(x.type==="dir"?"folder":"note",18)}</div><div class="t"><a href="#" data-a="fd" data-p="${esc(x.path)}"><b>${esc(x.name)}</b></a></div></li>`).join("")}</ul><div class="add"><input id="nf" placeholder="Yeni dosya adı (ör. notlar.txt)"><button class="pri" data-a="fn">Oluştur</button></div>`;
+ if(f.type==="file")return crumb+`<textarea id="ed" rows="16" spellcheck="false" style="font-family:ui-monospace,Menlo,monospace;font-size:.85rem;white-space:pre;overflow:auto">${esc(f.text)}</textarea><button class="pri wide" data-a="fs">Kaydet (GitHub’a gönder)</button>`;
+ return crumb+`<p class="sub">Bu dosya panelde düzenlenemez (çok büyük ya da metin değil).</p>`}
 const pickF=e=>{FL=[...e.target.files];$("fls").textContent=FL.slice(0,6).map(f=>f.name).join(", ")+(FL.length>6?" +"+(FL.length-6)+" dosya":"")};
 const ghView=d=>d.error?`<p class="sub">Veri alınamadı: ${esc(d.error)}</p>`:`<p class="sub">⭐ ${d.info.stars}, dal: ${esc(d.info.branch)}, <a href="${esc(d.info.url)}" target="_blank" rel="noopener">GitHub’da aç</a>, <a href="#" data-a="rf">yenile</a></p>
 <h4>Yayın durumu</h4>${d.deploy?`<div class="live"><span>${esc(d.deploy.state)} (${esc(d.deploy.env)})</span>${d.deploy.url?`<a href="${esc(d.deploy.url)}" target="_blank" rel="noopener">Aç</a>`:""}</div>`:`<p class="sub">Henüz dağıtım kaydı yok.</p>`}
@@ -294,7 +311,7 @@ async function doPush(p){
   r=await post({mode:"commit",repo,files:list,message:"BuildLog ile yüklendi ("+n+" dosya)"});if(!r.ok)throw new Error(r.error||"Commit oluşturulamadı");
   say("Yayın ayarlanıyor…");
   r=await post({mode:"publish",repo});if(r.vercel)say("Vercel otomatik yayınlayacak (yaklaşık 1 dk).");
-  p.repo=G.user.login+"/"+repo;p.url=r.url||p.url;p.at=Date.now();PD[p.id]=null;
+  p.repo=G.user.login+"/"+repo;p.url=r.url||p.url;p.at=Date.now();PD[p.id]=null;FS[p.id]=null;
   S.acts.unshift({i:"code",t:p.name+" GitHub’a gönderildi ("+n+" dosya)"});save();render();
   say("Bitti! "+n+" dosya gönderildi.","ok");if($("lv"))$("lv").outerHTML=live(p);
  }catch(e){say("Hata: "+e.message)}
@@ -311,11 +328,12 @@ ${(tk.length||(p.auto&&p.src))?"":`<label>İlerleme: <b id="pv">%${p.pct}</b><in
 ${p.repo?`<label style="display:flex;gap:10px;align-items:center;margin-top:16px"><input type="checkbox" id="au" ${p.auto?"checked":""} style="width:auto;display:inline-block;margin:0"> İlerlemeyi GitHub’dan hesapla</label><p class="sub" style="margin:4px 0 0">${p.auto?(p.src?esc(p.src):"Henüz milestone ya da issue yok, ilerlemeyi elle ayarlayabilirsin."):"Milestone varsa onu, yoksa issue’ları baz alır."}</p>`:""}
 <h4>Canlı bağlantı</h4>${live(p)}`;
  else if(TAB==="gh")b=!p.repo?`<p class="sub" style="margin-top:14px">Bu proje henüz bir GitHub reposuna bağlı değil. “Yükle” sekmesinden dosya gönderince repo oluşur.</p>`:!G?`<p class="sub" style="margin-top:14px">Verileri görmek için GitHub’a bağlan.</p>`:(PD[p.id]&&!PD[p.id].loading?ghView(PD[p.id]):`<p class="sub" style="margin-top:14px">Yükleniyor…</p>`);
+ else if(TAB==="fi")b=!p.repo?`<p class="sub" style="margin-top:14px">Önce bu projeyi bir GitHub reposuna bağla (Yükle sekmesinden dosya gönder).</p>`:!G?`<p class="sub" style="margin-top:14px">Dosyaları görmek için GitHub’a bağlan.</p>`:filesView(p);
  else b=`<label class="drop">Dosyaları seç<input type="file" id="fl" multiple hidden></label><label class="drop" style="margin-top:8px">Klasör seç (bilgisayarda)<input type="file" id="fd" webkitdirectory hidden></label><div id="fls" class="sub" style="margin:8px 0 0"></div><button class="pri wide" id="pushb">${ic("gh",18)} GitHub’a gönder</button><div id="lg"></div>${live(p)}`;
- ov(`<div class="ph"><div class="av" style="--h:${HUE[S.projects.indexOf(p)%6]}">${esc(p.name[0])}</div><div><h3 style="margin:0">${esc(p.name)}</h3><p class="sub" style="margin:0">${esc(p.desc)}</p></div></div>
+ ov(`<div class="ph"><div class="av" style="--h:${p.hue!=null?p.hue:HUE[S.projects.indexOf(p)%6]}">${esc(p.icon||p.name[0])}</div><div><h3 style="margin:0">${esc(p.name)}</h3><p class="sub" style="margin:0">${esc(p.desc)}</p></div></div>
 <div class="bar"><div class="pbar"><i style="width:${p.pct}%"></i></div><span>%${p.pct}</span></div>
-<div class="tabs">${[["gen","Genel"],["gh","GitHub"],["up","Yükle"]].map(x=>`<button class="${TAB===x[0]?"on":""}" data-a="tab" data-t="${x[0]}">${x[1]}</button>`).join("")}</div>${b}
-<div class="row2"><button class="ghost" data-a="arc">${p.arch?"Arşivden çıkar":"Arşivle"}</button><button class="ghost" data-a="del">Sil</button><button class="ghost" data-a="close">Kapat</button></div>`);
+<div class="tabs">${[["gen","Genel"],["gh","GitHub"],["fi","Dosyalar"],["up","Yükle"]].map(x=>`<button class="${TAB===x[0]?"on":""}" data-a="tab" data-t="${x[0]}">${x[1]}</button>`).join("")}</div>${b}
+<div class="row2"><button class="ghost" data-a="edp">Düzenle</button><button class="ghost" data-a="arc">${p.arch?"Arşivden çıkar":"Arşivle"}</button><button class="ghost" data-a="del">Sil</button><button class="ghost" data-a="close">Kapat</button></div>`);
  const nt=$("nt");if(nt)nt.oninput=()=>{p.note=nt.value;save()};
  const ty=$("ty");if(ty)ty.onchange=()=>{const o=p.type;p.type=ty.value;const k=p.tags.indexOf(o);if(k>=0)p.tags[k]=p.type;save();render()};
  const rg=$("rg");if(rg)rg.oninput=e=>{p.pct=+e.target.value;p.at=Date.now();$("pv").textContent="%"+p.pct;save();render()};
@@ -323,6 +341,7 @@ ${p.repo?`<label style="display:flex;gap:10px;align-items:center;margin-top:16px
  if($("fl")){$("fl").onchange=pickF;$("fd").onchange=pickF}
  if($("pushb"))$("pushb").onclick=()=>doPush(p);
  if(TAB==="gh"&&p.repo&&G&&!PD[p.id])loadRepo(p);
+ if(TAB==="fi"&&p.repo&&G&&!FS[p.id])loadDir(p,"");
 }
 document.addEventListener("click",e=>{const t=e.target.closest("[data-a]");if(!t){if(e.target.id==="ov")close();return}const a=t.dataset.a;
  if(a==="goto"){view=t.dataset.v;show();render();window.scrollTo(0,0)}
@@ -334,6 +353,10 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-a]");if(!t
  else if(a==="tka"){const v=$("nk").value.trim();if(!v)return;const p=find(CP);(p.tasks=p.tasks||[]).push({t:v,d:false});save();render();sheet(CP,"gen")}
  else if(a==="isa"){const v=$("ni").value.trim();if(v)ghAct({mode:"issue",title:v,milestone:+($("nm")&&$("nm").value)||0})}
  else if(a==="cls")ghAct({mode:"close",n:+t.dataset.n})
+ else if(a==="fd"){e.preventDefault();loadDir(find(CP),t.dataset.p)}
+ else if(a==="fs"){const p=find(CP);fsave(p,FS[p.id].path,$("ed").value)}
+ else if(a==="fn"){const v=$("nf").value.trim().replace(/^\/+/,"");if(!v)return;const b=FS[CP].path;FS[CP]={path:b?b+"/"+v:v,type:"file",text:""};sheet(CP,"fi")}
+ else if(a==="edp"){const p=find(CP),id=CP;form("Projeyi düzenle",[{k:"name",l:"Proje adı"},{k:"desc",l:"Açıklama",t:"area"},{k:"icon",l:"İkon (bir emoji, boş bırakırsan ilk harf)"},{k:"hue",l:"Renk",t:"sel",o:CN}],v=>{p.name=v.name;p.desc=v.desc||"Açıklama yok";p.icon=v.icon.slice(0,4);p.hue=HUE[CN.indexOf(v.hue)];p.at=Date.now();save();setTimeout(()=>sheet(id,"gen"),0)},"Kaydet");$("f_name").value=p.name;$("f_desc").value=p.desc==="Açıklama yok"?"":p.desc;$("f_icon").value=p.icon||"";$("f_hue").value=CN[HUE.indexOf(p.hue!=null?p.hue:HUE[S.projects.indexOf(p)%6])]||CN[0]}
  else if(a==="msa"){const v=$("nms").value.trim();if(v)ghAct({mode:"milestone",title:v})}
  else if(a==="rf"){e.preventDefault();PD[CP]=null;sheet(CP,"gh")}
  else if(a==="arc"){const p=find(CP);p.arch=!p.arch;save();close();render();toast(p.arch?"Arşivlendi":"Arşivden çıkarıldı")}
